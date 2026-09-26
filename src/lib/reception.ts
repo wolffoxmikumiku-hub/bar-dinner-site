@@ -1,14 +1,15 @@
 /**
  * アンテナ受信ロジック
  *
- * 壊れたラジオのアンプとアンテナが「現実のWebアクセス」を受信し、
+ * この星のアンテナが「現実のWebアクセス」を受信し、
  * 基板の天候と訪問客を決める。入力にしているのは:
  *  - アクセス時刻（20時以降は夜。Barが点灯する）
  *  - 日付（その日の天候の基調。全員に同じ空が届く）
  *  - 訪問回数（localStorage。通うほど電波が安定する）
  *  - 回線種別 navigator.connection（弱い回線ほどノイズが強い）
  *  - リファラ（どこから電波が来たか）
- * URLに ?weather=rain|storm|static|clear を付けると天候を強制できる（確認用）。
+ * URLに ?weather=rain|storm|static|clear を付けると天候を、
+ * ?time=night|day を付けると時間帯を強制できる（確認用）。
  */
 import type { AreaId, Condition } from "@/data/world";
 import { daySeed, seededRandom } from "./daily";
@@ -42,7 +43,9 @@ function safeStorage<T>(fn: () => T, fallback: T): T {
 }
 
 export function receive(now = new Date()): Reception {
-  const hour = now.getHours();
+  const params = new URLSearchParams(location.search);
+  const forcedTime = params.get("time");
+  const hour = forcedTime === "night" ? 22 : forcedTime === "day" ? 12 : now.getHours();
   const isNight = hour >= 20 || hour < 5;
 
   const visitCount = safeStorage(() => {
@@ -60,7 +63,7 @@ export function receive(now = new Date()): Reception {
   let weather = WEATHERS[Math.floor(rnd() * WEATHERS.length)];
   if (!navigator.onLine) weather = "static";
 
-  const forced = new URLSearchParams(location.search).get("weather");
+  const forced = params.get("weather");
   if (forced && ["clear", "static", "rain", "storm"].includes(forced)) weather = forced as Weather;
 
   let origin = "direct";
@@ -76,6 +79,7 @@ export function receive(now = new Date()): Reception {
 export function meets(r: Reception, c: Condition | undefined) {
   if (!c) return true;
   if (c === "night") return r.isNight;
+  if (c === "day") return !r.isNight;
   if (c === "rain") return r.weather === "rain" || r.weather === "storm";
   return r.weather === "storm";
 }

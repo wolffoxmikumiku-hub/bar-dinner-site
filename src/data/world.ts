@@ -1,5 +1,5 @@
 /**
- * 基板惑星『壊れたレトロラジオ』 世界観データ
+ * 基板惑星 世界観データ（星の正体＝壊れたレトロラジオはサイト上では明かさない）
  *
  * 出典:
  *  - 企画ブリーフ（エリア・店舗・キャラ・共通シグネチャー）
@@ -97,7 +97,7 @@ export const AREAS: Area[] = [
     id: "speaker",
     name: "音響・出力エリア",
     part: "スピーカー・イヤホンジャック",
-    description: "ラジオの出口。ここだけは今も夜ごとに低音が漏れている。",
+    description: "この星の出口。ここだけは今も夜ごとに低音が漏れている。",
     x: 935,
     y: 300,
     source: "excel",
@@ -130,7 +130,8 @@ export type ShopId =
   | "power-alley"
   | "yamasemi-stall";
 
-export type Condition = "night" | "rain" | "storm";
+/** night = 20:00–5:00 / day = 5:00–20:00 */
+export type Condition = "night" | "day" | "rain" | "storm";
 
 export type ShopItem = { name: string; note?: string; price?: string };
 
@@ -157,8 +158,10 @@ export type Shop = {
   goods?: string[];
   characters: string[]; // Character.id
   sections: ShopSection[];
-  /** 営業条件。night = 20時以降のみ点灯 */
+  /** 営業条件。night = Bar（20:00–5:00）/ day = Diner（5:00–20:00） */
   opensWhen?: Condition;
+  /** 閉店中に入ったときの一文 */
+  closedNote?: string;
   /** 開くときの演出 */
   openEffect?: "static-burst" | "rainbow" | "steam";
   accent: "pink" | "mint" | "cinnamon" | "silver";
@@ -179,6 +182,7 @@ export const SHOPS: Shop[] = [
     goods: ["オリジナルロックグラス", "コースター", "フクロウ店長厳選 Lo-fiコンピレーション（レコード風パッケージ）"],
     characters: ["owl", "cat", "pigeon"],
     opensWhen: "night",
+    closedNote: "ただいま準備中。扉には CLOSED の札。ネオンが灯るのは 20:00 から。扉の隙間からグラスを磨く音だけが聞こえる。",
     accent: "pink",
     sections: [
       {
@@ -215,6 +219,8 @@ export const SHOPS: Shop[] = [
       "一番熱を持つメインCPUエリアに佇むアメリカンダイナーカフェ。電磁波でキャッチした「ジュークボックス」や「ダイナー」のログを集積（Collective）したことが名前の由来。",
     goods: ["ダイナーロゴ入りマグカップ", "ワークエプロン", "メニュー表風ZINE"],
     characters: ["bison", "pig", "raccoon", "pronghorn"],
+    opensWhen: "day",
+    closedNote: "本日の営業は終了しました。入口に CLOSED の札。鉄板の余熱だけがまだ少し温かい。朝 5:00 にまた開きます。",
     accent: "cinnamon",
     sections: [
       {
@@ -443,7 +449,7 @@ export const SHOPS: Shop[] = [
     area: "speaker",
     x: 935,
     y: 300,
-    tagline: "ラジオの出口で踊る",
+    tagline: "星の出口で踊る",
     concept: "イヤホンジャックの奥のダンスホール。DJはトカゲのジャックリーン。",
     characters: ["lizard"],
     accent: "pink",
@@ -648,9 +654,6 @@ export const COPPER = {
   mint: "#3DFFC0",
   cinnamon: "#C8814B",
 } as const;
-
-/** 『レイとユウ』連動リンク。公開時に NEXT_PUBLIC_REI_YUU_URL を設定する */
-export const REI_YUU_URL = process.env.NEXT_PUBLIC_REI_YUU_URL ?? "#rei-and-yuu";
 
 export const shopById = (id: ShopId) => SHOPS.find((s) => s.id === id)!;
 export const charById = (id: string) => CHARACTERS.find((c) => c.id === id);

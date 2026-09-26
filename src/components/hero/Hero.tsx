@@ -10,7 +10,7 @@ const LANDSCAPE: MirrorSpot = { x: 0.74, y: 0.3, r: 0.12 };
 const PORTRAIT: MirrorSpot = { x: 0.64, y: 0.3, r: 0.085 };
 
 export function Hero() {
-  const { reception, openEgg } = useRadio();
+  const { reception } = useRadio();
   const box = useRef<HTMLElement>(null);
   const [size, setSize] = useState({ w: 1280, h: 800 });
   const mirror = size.w / size.h < 0.9 ? PORTRAIT : LANDSCAPE;
@@ -30,7 +30,7 @@ export function Hero() {
   };
 
   return (
-    <section ref={box} className="relative h-[100svh] min-h-[560px] overflow-hidden" aria-label="基板惑星 壊れたレトロラジオ">
+    <section ref={box} className="relative h-[100svh] min-h-[560px] overflow-hidden" aria-label="基板惑星">
       <PcbCanvas mirror={mirror} className="absolute inset-0" />
 
       {/* シルクスクリーン印字 */}
@@ -42,17 +42,16 @@ export function Hero() {
         <span style={{ left: "40%", bottom: "6%" }}>ANT ⌁ AMP-OUT</span>
       </div>
 
-      {/* ハンダの鏡面広場（クリックでイースターエッグ） */}
-      <button
-        onClick={openEgg}
-        aria-label="銀色の鏡面広場（シルバー・ミラー）"
-        className="mirror-hotspot absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
+      {/* ハンダの鏡面広場 */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
         style={{ left: hot.left, top: hot.top, width: hot.d, height: hot.d * 0.8 }}
       >
         <span className="silk-label absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap">
           SILVER MIRROR 広場
         </span>
-      </button>
+      </div>
 
       {/* タイトル */}
       <div className="pointer-events-none absolute inset-x-0 top-[22%] px-4 sm:left-[7%] sm:right-auto sm:top-[30%] sm:px-0">
@@ -69,9 +68,9 @@ export function Hero() {
           animate={{ opacity: 1, letterSpacing: "0em" }}
           transition={{ delay: 0.6, duration: 0.9 }}
           className="glitch-title mt-3 text-4xl font-black leading-tight text-white sm:text-6xl"
-          data-text="壊れたレトロラジオ"
+          data-text="基板惑星"
         >
-          壊れたレトロラジオ
+          基板惑星
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
@@ -79,7 +78,7 @@ export function Hero() {
           transition={{ delay: 1.1 }}
           className="mt-4 max-w-md text-sm leading-relaxed text-emerald-50/80 sm:text-base"
         >
-          宇宙を漂う、電源の切れたラジオ。その基板の上に街がある。
+          宇宙を漂う、とっくに電源の切れた“なにか”。その基板の上に街がある。
           <br />
           アンテナがあなたのアクセスを受信すると、今日の天気と客が決まる。
         </motion.p>
@@ -103,7 +102,7 @@ export function Hero() {
             <dd>{WEATHER_LABEL[reception.weather]}</dd>
             <dt>LOCAL</dt>
             <dd>
-              {String(reception.hour).padStart(2, "0")}:00 {reception.isNight ? "／ Bar 点灯中" : "／ Bar は20時から"}
+              {String(reception.hour).padStart(2, "0")}:00 {reception.isNight ? "／ Bar 営業中・Diner CLOSED" : "／ Diner 営業中・Bar CLOSED"}
             </dd>
             <dt>VISIT</dt>
             <dd>

@@ -10,7 +10,7 @@ export function TopBar() {
     <header className="topbar fixed inset-x-0 top-0 z-40 px-3 py-2 sm:px-6 sm:py-3">
       <div className="mx-auto flex max-w-6xl items-center gap-3 sm:gap-6">
         <a href="#" className="hidden shrink-0 font-mono text-xs font-bold tracking-[0.25em] text-white sm:block">
-          B<span className="text-[var(--pink)]">/</span>R<span className="text-[var(--mint)]">/</span>R
+          P<span className="text-[var(--pink)]">/</span>C<span className="text-[var(--mint)]">/</span>B
         </a>
         <div className="min-w-0 flex-1">
           <TunerDial />
@@ -50,11 +50,11 @@ export function Lore() {
         </motion.div>
         <motion.div {...fade} className="space-y-4 text-sm leading-loose text-emerald-50/80 sm:text-base">
           <p>
-            宇宙空間を漂流する、巨大な壊れたレトロラジオ。住人たちが暮らすのは、その内部の基板（PCB）の上だ。
+            宇宙空間を漂流する、巨大な“なにか”。住人たちが暮らすのは、その内部の基板（PCB）の上だ。自分たちの星がもともと何だったのか、知っている者はいない。
           </p>
           <p>
             電気は来ていないはずなのに、ときどき微弱なノイズと静電気が走る。
-            アンプとアンテナはまだ生きていて、どこか遠くの「アクセス」を拾っては、この星の天気や、やって来る客を変えていく。
+            どこかのアンテナだけはまだ生きていて、遠くの「アクセス」を拾っては、この星の天気や、やって来る客を変えていく。
           </p>
           <p>
             待ち合わせはいつも「銀色の鏡面広場（シルバー・ミラー）」。
@@ -117,7 +117,7 @@ export function Signature() {
 export function Footer() {
   return (
     <footer className="border-t border-emerald-100/10 px-4 py-10 text-center font-mono text-[10px] tracking-widest text-emerald-50/40">
-      BROKEN RETRO RADIO — PLANET PCB
+      PLANET PCB
       <br />
       ANT.RX で受信したアクセスは、この星の天気になります。
     </footer>

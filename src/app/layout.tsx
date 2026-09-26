@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "壊れたレトロラジオ | 基板惑星",
-  description: "宇宙を漂う壊れたレトロラジオの基板の上にある街。Bar: The Node、シナブン堂、公籠包、電波塔、7%、Pâtisserie Quartz。",
+  title: "基板惑星 | Bar & Diner",
+  description: "宇宙を漂う、電源の切れた基板の上にある街。Bar: The Node、シナブン堂、公籠包、電波塔、7%、Pâtisserie Quartz。",
 };
 
 export const viewport: Viewport = { themeColor: "#03140c" };

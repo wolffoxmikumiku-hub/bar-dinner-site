@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRadio } from "@/components/RadioProvider";
 import { ShopModal } from "@/components/map/ShopModal";
 import { shopById, type Shop } from "@/data/world";
@@ -9,16 +9,37 @@ import { meets } from "@/lib/reception";
 
 /**
  * 定点観測モニター（真鍮の丸窓）
- *  - 1F: COLLECTIVE DINER / B1: Bar: The Node をフロア切替
+ *  - 1F: COLLECTIVE DINER（5:00–20:00）/ B1: Bar: The Node（20:00–5:00）をフロア切替
+ *  - 営業時間外のフロアは明かりが落ち、CLOSED の札がかかる
+ *  - 雨の日は店内の窓の外にだけ雨が降る（丸窓のガラスには降らせない）
  *  - TIME / CALENDAR / LIVE FEED パネルは実時刻
  *  - 右のタブはお土産ショップ（10:00–20:00 営業）
  * シーン画像は public/scenes/ の参考イラスト。差し替えは FLOORS の src を変えるだけ。
  */
 
 type FloorId = "1F" | "B1";
-const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string }> = {
-  "1F": { shop: "collective-diner", src: "/scenes/diner-1f.webp", alt: "COLLECTIVE DINER の店内。バイソンがバーガーを焼き、プロングホーンがローラースケートで配膳している" },
-  B1: { shop: "the-node", src: "/scenes/bar-b1.webp", alt: "Bar: The Node の店内。フクロウのマスターがグラスを磨いている" },
+/** 窓ガラスの形（シーン画像 1408x768 の座標）。雨はこの中にだけ降る */
+type Pane = { kind: "poly"; points: [number, number][] } | { kind: "ellipse"; cx: number; cy: number; rx: number; ry: number };
+const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign: string; panes: Pane[]; paneTint: string }> = {
+  "1F": {
+    shop: "collective-diner",
+    src: "/scenes/diner-1f.webp",
+    alt: "COLLECTIVE DINER の店内。バイソンがバーガーを焼き、プロングホーンがローラースケートで配膳している",
+    sign: "1F DINER ／ Open 5 AM",
+    panes: [
+      { kind: "poly", points: [[837, 130], [869, 142], [869, 230], [837, 220]] },
+      { kind: "poly", points: [[899, 155], [982, 195], [982, 267], [899, 235]] },
+    ],
+    paneTint: "rgba(74, 92, 120, 0.62)",
+  },
+  B1: {
+    shop: "the-node",
+    src: "/scenes/bar-b1.webp",
+    alt: "Bar: The Node の店内。フクロウのマスターがグラスを磨いている",
+    sign: "B1 BAR ／ Open 8 PM",
+    panes: [{ kind: "ellipse", cx: 945, cy: 210, rx: 53, ry: 68 }],
+    paneTint: "rgba(40, 52, 90, 0.35)",
+  },
 };
 
 const WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -43,7 +64,7 @@ function timeLabel(d: Date) {
 }
 
 export function PortholeViewer() {
-  const { reception, glitch } = useRadio();
+  const { reception, glitch, enterShop } = useRadio();
   const now = useClock();
   const [floor, setFloor] = useState<FloorId>("1F");
   const [souvenir, setSouvenir] = useState(false);
@@ -54,12 +75,20 @@ export function PortholeViewer() {
     if (reception?.isNight) setFloor("B1");
   }, [reception?.isNight]);
 
-  const barOpen = reception ? meets(reception, "night") : false;
   const rain = reception ? meets(reception, "rain") : false;
+  const storm = reception?.weather === "storm";
   const hour = now?.getHours() ?? 12;
   const souvenirOpen = hour >= 10 && hour < 20;
   const current = FLOORS[floor];
   const currentShop = shopById(current.shop);
+  const open = reception ? meets(reception, currentShop.opensWhen) : true;
+
+  // お土産ショップ（EC）を開いている間は、その店のBGM
+  useEffect(() => {
+    if (!souvenir) return;
+    enterShop(currentShop.id);
+    return () => enterShop(null);
+  }, [souvenir, currentShop.id, enterShop]);
 
   const switchFloor = (f: FloorId) => {
     if (f === floor) return;
@@ -96,19 +125,28 @@ export function PortholeViewer() {
                 exit={{ y: floor === "B1" ? "-100%" : "100%" }}
                 transition={{ type: "spring", stiffness: 120, damping: 20 }}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={current.src} alt={current.alt} className="porthole-scene" draggable={false} />
-                {floor === "B1" && !barOpen && (
-                  <span className="absolute inset-0 grid place-items-center bg-[#050818]/75">
-                    <span className="closed-sign">
-                      CLOSED
-                      <small>B1 – BAR ／ Open 8 PM</small>
+                <span className="porthole-scene">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={current.src} alt={current.alt} className="block w-full" draggable={false} />
+                  {rain && <WindowRain id={floor} panes={current.panes} tint={current.paneTint} storm={storm} />}
+                </span>
+                {!open && (
+                  <span className="absolute inset-0 grid place-items-center bg-[#050818]/70">
+                    <span className="hang-sign">
+                      <svg viewBox="0 0 100 40" className="hang-strings" aria-hidden>
+                        <line x1="50" y1="5" x2="14" y2="40" />
+                        <line x1="50" y1="5" x2="86" y2="40" />
+                        <circle cx="50" cy="5" r="4" />
+                      </svg>
+                      <span className="closed-sign">
+                        CLOSED
+                        <small>{current.sign}</small>
+                      </span>
                     </span>
                   </span>
                 )}
               </motion.button>
             </AnimatePresence>
-            {rain && <span className="porthole-rain" aria-hidden />}
             <span className="porthole-glare" aria-hidden />
           </div>
           {Array.from({ length: 8 }, (_, i) => {
@@ -179,4 +217,87 @@ export function PortholeViewer() {
       <ShopModal shop={shop} onClose={() => setShop(null)} />
     </section>
   );
+}
+
+/** 店内の窓の外に降る雨（窓ガラスの形で切り抜く） */
+function WindowRain({ id, panes, tint, storm }: { id: string; panes: Pane[]; tint: string; storm: boolean }) {
+  const drops = useMemo(
+    () =>
+      panes.map((p) => {
+        const [x0, y0, x1, y1] =
+          p.kind === "ellipse" ? [p.cx - p.rx, p.cy - p.ry, p.cx + p.rx, p.cy + p.ry] : bbox(p.points);
+        let seed = x0 * 7 + y0;
+        const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+        const n = Math.round(((x1 - x0) * (y1 - y0)) / 180);
+        return {
+          box: [x0, y0, x1, y1] as const,
+          lines: Array.from({ length: n }, () => ({
+            x: x0 + rnd() * (x1 - x0 + 20),
+            y: y0 - 20 + rnd() * (y1 - y0),
+            len: 8 + rnd() * 10,
+            dur: 0.45 + rnd() * 0.35,
+            delay: -rnd(),
+          })),
+          beads: Array.from({ length: Math.max(2, Math.round(n / 5)) }, () => ({
+            x: x0 + 4 + rnd() * (x1 - x0 - 8),
+            y: y0 + 4 + rnd() * (y1 - y0 - 8),
+            dur: 3 + rnd() * 4,
+            delay: -rnd() * 6,
+          })),
+        };
+      }),
+    [panes],
+  );
+
+  return (
+    <svg viewBox="0 0 1408 768" className="absolute inset-0 h-full w-full" aria-hidden>
+      <defs>
+        {panes.map((p, i) => (
+          <clipPath key={i} id={`pane-${id}-${i}`}>
+            {p.kind === "ellipse" ? (
+              <ellipse cx={p.cx} cy={p.cy} rx={p.rx} ry={p.ry} />
+            ) : (
+              <polygon points={p.points.map((q) => q.join(",")).join(" ")} />
+            )}
+          </clipPath>
+        ))}
+      </defs>
+      {drops.map((d, i) => {
+        const [x0, y0, x1, y1] = d.box;
+        return (
+          <g key={i} clipPath={`url(#pane-${id}-${i})`}>
+            <rect x={x0} y={y0} width={x1 - x0} height={y1 - y0} fill={tint} />
+            {storm && <rect x={x0} y={y0} width={x1 - x0} height={y1 - y0} className="pane-flash" />}
+            {d.lines.map((l, j) => (
+              <line
+                key={j}
+                x1={l.x}
+                y1={l.y}
+                x2={l.x - l.len * 0.25}
+                y2={l.y + l.len}
+                className="pane-drop"
+                style={{ animationDuration: `${l.dur}s`, animationDelay: `${l.delay}s`, ["--fall" as string]: `${y1 - y0 + 30}px` }}
+              />
+            ))}
+            {d.beads.map((b, j) => (
+              <circle
+                key={`b${j}`}
+                cx={b.x}
+                cy={b.y}
+                r={1.6}
+                className="pane-bead"
+                style={{ animationDuration: `${b.dur}s`, animationDelay: `${b.delay}s` }}
+              />
+            ))}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function bbox(pts: [number, number][]) {
+  const xs = pts.map((p) => p[0]);
+  const ys = pts.map((p) => p[1]);
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
 }

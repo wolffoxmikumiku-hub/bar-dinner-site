@@ -15,7 +15,7 @@ import { ShopModal } from "./ShopModal";
  *  - Barは20時以降のみ点灯、雨の日は鳩、雷の日は三兄弟、ヤマセミ兄妹は日替わりで出張
  */
 export function CircuitMap() {
-  const { reception, openEgg, glitch } = useRadio();
+  const { reception, glitch } = useRadio();
   const [hover, setHover] = useState<string | null>(null);
   const [selected, setSelected] = useState<Shop | null>(null);
 
@@ -45,7 +45,7 @@ export function CircuitMap() {
 
       <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
         <div className="map-frame relative aspect-[1000/640] min-w-[720px]">
-          <BoardArt onMirror={openEgg} />
+          <BoardArt />
 
           {/* エリア名（ホバー中のみ強調） */}
           {AREAS.map((a) => (

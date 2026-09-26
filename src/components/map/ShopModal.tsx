@@ -18,7 +18,7 @@ function withDaily(shop: Shop): ShopSection[] {
 }
 
 export function ShopModal({ shop, onClose }: { shop: Shop | null; onClose: () => void }) {
-  const { reception } = useRadio();
+  const { reception, enterShop } = useRadio();
   const closeBtn = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -36,6 +36,13 @@ export function ShopModal({ shop, onClose }: { shop: Shop | null; onClose: () =>
   }, [shop, onClose]);
 
   const closed = shop && reception && shop.opensWhen ? !meets(reception, shop.opensWhen) : false;
+
+  // 店に入ったらその店のBGMへ。閉店中は扉越しのこもった音。出たら街の音に戻る
+  useEffect(() => {
+    if (!shop) return;
+    enterShop(shop.id, closed);
+    return () => enterShop(null);
+  }, [shop, closed, enterShop]);
 
   return (
     <AnimatePresence>
@@ -83,7 +90,7 @@ export function ShopModal({ shop, onClose }: { shop: Shop | null; onClose: () =>
 
             {closed && (
               <p className="mt-4 rounded-md border border-amber-200/20 bg-amber-200/5 px-3 py-2 text-xs text-amber-100/90">
-                ただいま準備中。ネオンが灯るのは 20:00 から。扉の隙間からグラスを磨く音だけが聞こえる。
+                {shop.closedNote ?? "ただいま準備中。"}
               </p>
             )}
 

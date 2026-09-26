@@ -21,7 +21,7 @@ const TRACES: { d: string; c: keyof typeof COPPER }[] = [
   { d: "M60 300 V600 H420", c: "pink" },
 ];
 
-export function BoardArt({ onMirror }: { onMirror: () => void }) {
+export function BoardArt() {
   return (
     <svg viewBox="0 0 1000 640" className="absolute inset-0 h-full w-full" role="img" aria-label="基板全体図">
       <defs>
@@ -142,7 +142,7 @@ export function BoardArt({ onMirror }: { onMirror: () => void }) {
       </g>
 
       {/* 銀色の鏡面広場（ハンダのフィレット） */}
-      <g transform="translate(490 520)" className="cursor-pointer" onClick={onMirror}>
+      <g transform="translate(490 520)">
         <path
           d="M-70 -8 C-72 -40 -20 -52 12 -44 C52 -36 84 -30 86 -2 C88 26 48 40 10 38 C-30 36 -68 22 -70 -8 Z"
           fill="url(#solder)"
