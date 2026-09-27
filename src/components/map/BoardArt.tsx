@@ -4,7 +4,7 @@ import { COPPER } from "@/data/world";
 
 /**
  * 全体基板マップの「絵」の部分（SVG）。
- * 部品＝エリア。インタラクションは CircuitMap 側の HTML ピンが持つ。
+ * 部品＝エリア。インタラクションは MapBoard 側の HTML ピンが持つ。
  */
 
 const TRACES: { d: string; c: keyof typeof COPPER }[] = [
