@@ -95,11 +95,11 @@ export function ShopModal({ shop, onClose }: { shop: Shop | null; onClose: () =>
             )}
 
             {shop.gallery && (
-              <div className={`shop-gallery mt-5 grid gap-2 ${shop.gallery.length > 1 ? "grid-cols-2" : ""}`}>
+              <div className={`mt-5 grid gap-2 ${shop.gallery.length > 1 ? "grid-cols-2" : ""}`}>
                 {shop.gallery.map((g) => (
-                  <figure key={g.src} className="overflow-hidden rounded-lg border border-emerald-100/10 bg-white">
+                  <figure key={g.src} className="overflow-hidden rounded-lg border border-emerald-100/10" style={{ background: g.bg ?? "#0b1512" }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={g.src} alt={g.alt} className="block max-h-80 w-full object-contain" loading="lazy" />
+                    <img src={g.src} alt={g.alt} className="mx-auto block h-64 w-64 object-contain [image-rendering:pixelated] sm:h-72 sm:w-72" loading="lazy" />
                     {g.caption && <figcaption className="bg-black/70 px-2 py-1 font-mono text-[10px] tracking-widest text-emerald-50/70">{g.caption}</figcaption>}
                   </figure>
                 ))}
@@ -151,7 +151,7 @@ export function ShopModal({ shop, onClose }: { shop: Shop | null; onClose: () =>
                         <span className="relative text-2xl">
                           {c.image ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={c.image} alt="" className="block h-9 w-9 rounded-full bg-white object-cover" />
+                            <img src={c.image} alt="" className="block h-9 w-9 rounded-full bg-black/40 object-contain [image-rendering:pixelated]" />
                           ) : (
                             c.emoji
                           )}
