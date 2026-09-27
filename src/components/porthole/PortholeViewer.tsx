@@ -4,7 +4,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { useRadio } from "@/components/RadioProvider";
 import { ShopModal } from "@/components/map/ShopModal";
+import { MapBoard } from "@/components/map/MapBoard";
 import { shopById, type Shop } from "@/data/world";
+import { WEATHER_LABEL } from "@/lib/reception";
 import { meets } from "@/lib/reception";
 
 /**
@@ -132,6 +134,14 @@ export function PortholeViewer() {
     return () => enterShop(null);
   }, [souvenir, currentShop.id, enterShop]);
 
+  // 地図のワープタグ: Diner / Bar は丸窓のフロアを切り替え、それ以外は店に入る
+  const warp = (s: Shop) => {
+    if (s.id === "collective-diner") return switchFloor("1F");
+    if (s.id === "the-node") return switchFloor("B1");
+    if (s.openEffect === "static-burst") glitch(0.9);
+    setShop(s);
+  };
+
   const switchFloor = (f: FloorId) => {
     if (f === floor) return;
     glitch(0.35);
@@ -139,11 +149,20 @@ export function PortholeViewer() {
   };
 
   return (
-    <section id="live" className="relative mx-auto max-w-6xl px-4 py-20 sm:py-28">
+    <section id="live" className="relative mx-auto max-w-7xl px-4 py-20 sm:py-28">
       <p className="font-mono text-xs tracking-[0.3em] text-[var(--cinnamon)]">FIXED-POINT MONITOR</p>
       <h2 className="mt-2 text-2xl font-black text-white sm:text-4xl">丸窓から、中心街をのぞく</h2>
 
-      <div className="porthole-plate mt-8">
+      <div className="mt-8 grid items-start gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+      {/* ── 左: 受信モニター ── */}
+      <div className="min-w-0">
+        <div className="dash-status">
+          <span><b className="text-[var(--mint)]">●</b> SIGNAL: {reception ? "RECEIVING" : "SEARCHING…"}</span>
+          <span>WEATHER: {reception ? WEATHER_LABEL[reception.weather] : "---"}</span>
+          <span className="tabular-nums">TIME: {now ? now.toTimeString().slice(0, 8) : "--:--:--"}</span>
+        </div>
+        <p className="dash-title">RECEIVER (MAIN) ／ {current.shop === "the-node" ? "B1 BAR: THE NODE" : "1F COLLECTIVE DINER"}</p>
+      <div className="porthole-plate compact">
         {/* フロア切替 */}
         <div className="floor-tabs" role="tablist" aria-label="フロア">
           {(["1F", "B1"] as FloorId[]).map((f) => (
@@ -224,9 +243,39 @@ export function PortholeViewer() {
         </button>
       </div>
 
-      <p className="mt-4 text-center text-xs text-emerald-50/50">
+      <p className="mt-3 text-center text-xs text-emerald-50/50">
         窓をクリックすると店に入れます。{rain && "雨の日はB1の隅に、トレンチコートの客がいるらしい。"}
       </p>
+      </div>
+
+      {/* ── 右: 地図（ワープタグ）・店・ログ ── */}
+      <div className="min-w-0 space-y-4">
+        <div id="map" className="dash-panel scroll-mt-24">
+          <p className="dash-title">MAP NODE (WARP TAG)</p>
+          <MapBoard onPick={warp} current={current.shop} compact />
+          <p className="mt-2 font-mono text-[10px] text-emerald-50/50">ピンをクリック：DINER / BAR は丸窓が切り替わり、ほかの店はそのまま入店。</p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          {(["1F", "B1"] as FloorId[]).map((f) => {
+            const s = shopById(FLOORS[f].shop);
+            const isOpen = reception ? meets(reception, s.opensWhen) : true;
+            return (
+              <button key={f} onClick={() => switchFloor(f)} className="warp-card" data-active={floor === f || undefined}>
+                <span className="flex items-center justify-between gap-2 font-mono text-[10px] tracking-widest">
+                  <span>{f} ／ {f === "1F" ? "5:00–20:00" : "20:00–5:00"}</span>
+                  <span className={isOpen ? "text-[var(--mint)]" : "text-amber-200/70"}>{isOpen ? "● OPEN" : "CLOSED"}</span>
+                </span>
+                <b className="mt-1 block text-sm text-white">{s.name}</b>
+                <span className="mt-1 block text-xs leading-relaxed text-emerald-50/70">{s.tagline}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <DataLog floor={floor} open={open} rain={rain} />
+      </div>
+      </div>
 
       {/* お土産ドロワー */}
       <AnimatePresence>
@@ -265,6 +314,50 @@ export function PortholeViewer() {
 
       <ShopModal shop={shop} onClose={() => setShop(null)} />
     </section>
+  );
+}
+
+/** 受信ログ（それっぽい演出。実際の受信状態から数行つくる） */
+function DataLog({ floor, open, rain }: { floor: FloorId; open: boolean; rain: boolean }) {
+  const { reception } = useRadio();
+  const [lines, setLines] = useState<{ t: string; k?: string; m: string }[]>([]);
+  useEffect(() => {
+    if (!reception) return;
+    const base = Date.now();
+    const at = (s: number) => new Date(base + s * 1000).toTimeString().slice(0, 8);
+    const diner = meets(reception, "day");
+    const all = [
+      { t: at(0), k: "CONNECT", m: " TO SOURCE…" },
+      { t: at(1), m: "DECODING PACKETS…" },
+      { t: at(2), k: "SUCCESS", m: `: WEATHER = ${reception.weather.toUpperCase()}` },
+      { t: at(3), k: "COLLECTIVE_DINER", m: diner ? ": OPEN." : ": CLOSED (OPEN 5:00)." },
+      { t: at(4), k: "BAR_THE_NODE", m: diner ? ": CLOSED (OPEN 20:00)." : ": OPEN." },
+      { t: at(5), k: "SIGNAL STABLE", m: ` // VISIT #${reception.visitCount} VIA ${reception.origin.toUpperCase()}` },
+    ];
+    setLines([]);
+    const timers = all.map((l, i) => window.setTimeout(() => setLines((p) => [...p, l]), 400 + i * 450));
+    return () => timers.forEach(clearTimeout);
+  }, [reception]);
+
+  const extra = `${floor === "1F" ? "MONITOR → 1F DINER" : "MONITOR → B1 BAR"}${open ? "" : " (NO ONE HERE)"}${rain ? " // RAIN ON WINDOWS" : ""}`;
+  return (
+    <div className="dash-panel">
+      <p className="dash-title">DATA STREAM LOG</p>
+      <ul className="font-mono text-[10px] leading-relaxed text-emerald-50/45 sm:text-[11px]">
+        {lines.map((l, i) => (
+          <li key={i}>
+            [{l.t}] {l.k && <span className="text-[#2c9b60]">{l.k}</span>}
+            {l.m}
+          </li>
+        ))}
+        {lines.length >= 6 && (
+          <li>
+            [{lines[lines.length - 1].t}] <span className="text-[#2c9b60]">{extra}</span>
+            <span className="log-caret">_</span>
+          </li>
+        )}
+      </ul>
+    </div>
   );
 }
 

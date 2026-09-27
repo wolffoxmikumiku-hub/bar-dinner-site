@@ -703,3 +703,68 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .actor, .actor img, .grill-smoke, .confetti { animation: none !important; }
 }
+
+/* ── 受信ダッシュボード（丸窓＋地図） ───────── */
+.dash-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  padding: 8px 12px;
+  font-family: var(--font-mono-x);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: rgba(232, 255, 245, 0.6);
+  background: #0e0e0e;
+  border: 1px solid rgba(61, 255, 192, 0.12);
+  border-radius: 8px;
+}
+.dash-title {
+  margin: 12px 0 8px;
+  font-family: var(--font-mono-x);
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: #fff;
+}
+.dash-panel {
+  padding: 12px 14px 14px;
+  background: rgba(8, 12, 10, 0.75);
+  border: 1px solid rgba(61, 255, 192, 0.12);
+  border-radius: 12px;
+}
+.dash-panel > .dash-title:first-child { margin-top: 0; }
+.warp-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  color: rgba(232, 255, 245, 0.6);
+  background: rgba(8, 12, 10, 0.75);
+  border: 1px solid rgba(61, 255, 192, 0.12);
+  border-radius: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.warp-card:hover,
+.warp-card[data-active] {
+  border-color: var(--pink);
+  box-shadow: 0 0 18px rgba(255, 45, 149, 0.18);
+}
+.log-caret { animation: blink 1s steps(1) infinite; }
+/* 小さめの丸窓 */
+.porthole-plate.compact {
+  grid-template-columns: 1fr;
+  padding: 16px 12px;
+  gap: 12px;
+}
+.porthole-plate.compact .floor-tabs { flex-direction: row; }
+.porthole-plate.compact .floor-tabs button { width: 52px; height: 40px; font-size: 18px; }
+.porthole-plate.compact .porthole { width: min(80vw, 400px); }
+.porthole-plate.compact .feed-panel { position: static; width: auto; font-size: 13px; }
+.porthole-plate.compact .souvenir-tab { writing-mode: horizontal-tb; transform: none; width: 100%; }
+.porthole-plate.compact .closed-sign { font-size: 20px; padding: 8px 14px; }
+/* 小さめの地図 */
+.map-compact { border-radius: 14px; }
+.map-compact .area-label { font-size: 9px; }
+.map-compact .area-label small { display: none; }
+.map-compact .pin { width: 26px; height: 26px; }
+.map-compact .pin-dot, .map-compact .pin-pulse { width: 10px; height: 10px; }
+.pin[data-current] .pin-dot { box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.55), 0 0 18px 6px var(--pin); }
