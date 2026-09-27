@@ -57,5 +57,5 @@ public/scenes/            丸窓・世界観セクションの参考イラスト
 - **窓の外の雨**: `PortholeViewer.tsx` の `FLOORS[*].panes`（シーン画像 1408x768 上の窓ガラスの形）。画像を差し替えたら座標も合わせる。
 - **静的HTML版**: `npm run build:html` で `../html版/index.html`（ダブルクリックで開ける）を書き出す。
 - **シーン画像**: `public/scenes/*.webp`。丸窓は画像中心 (712, 380) 付近の半径 380px を切り抜く前提（`.porthole-scene` の left/top/width で調整）。
-- **キャラ絵**: 現在は絵文字 + 弾帯SVG のプレースホルダ。`CharacterRoster.tsx` の絵文字部分を画像に置き換え。
+- **キャラ絵**: `public/characters/` に置いて `world.ts` の `image`（顔アイコン）/ 店の `gallery`（店に入ると表示）にパスを書く。未設定のキャラは絵文字のまま。現在: スペースハム・液体子猫（moomoomeaw）・ハスキー（7%）
 - **Excelの「裏設定（明かさない）」列**はデータに取り込んでいません。

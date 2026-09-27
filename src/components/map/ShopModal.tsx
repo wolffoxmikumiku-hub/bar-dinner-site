@@ -94,6 +94,18 @@ export function ShopModal({ shop, onClose }: { shop: Shop | null; onClose: () =>
               </p>
             )}
 
+            {shop.gallery && (
+              <div className={`shop-gallery mt-5 grid gap-2 ${shop.gallery.length > 1 ? "grid-cols-2" : ""}`}>
+                {shop.gallery.map((g) => (
+                  <figure key={g.src} className="overflow-hidden rounded-lg border border-emerald-100/10 bg-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={g.src} alt={g.alt} className="block max-h-80 w-full object-contain" loading="lazy" />
+                    {g.caption && <figcaption className="bg-black/70 px-2 py-1 font-mono text-[10px] tracking-widest text-emerald-50/70">{g.caption}</figcaption>}
+                  </figure>
+                ))}
+              </div>
+            )}
+
             <p className="mt-4 text-sm leading-relaxed text-emerald-50/80">{shop.concept}</p>
 
             {withDaily(shop).map((sec) => {
@@ -137,7 +149,12 @@ export function ShopModal({ shop, onClose }: { shop: Shop | null; onClose: () =>
                     return (
                       <li key={id} className={`char-chip ${here ? "" : "opacity-40"}`}>
                         <span className="relative text-2xl">
-                          {c.emoji}
+                          {c.image ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={c.image} alt="" className="block h-9 w-9 rounded-full bg-white object-cover" />
+                          ) : (
+                            c.emoji
+                          )}
                           <BatteryBandolier className="absolute -bottom-1 -left-1 w-9" />
                         </span>
                         <span className="min-w-0">

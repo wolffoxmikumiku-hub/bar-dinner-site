@@ -57,7 +57,12 @@ export function CharacterRoster() {
                 data-away={!here || undefined}
               >
                 <div className="relative grid h-16 w-16 shrink-0 place-items-center rounded-full bg-black/40 text-4xl">
-                  <span className={here ? "" : "grayscale"}>{c.emoji}</span>
+                  {c.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={c.image} alt="" className={`char-face ${here ? "" : "grayscale"}`} loading="lazy" />
+                  ) : (
+                    <span className={here ? "" : "grayscale"}>{c.emoji}</span>
+                  )}
                   <BatteryBandolier className="absolute -bottom-1 -left-2 w-14" />
                 </div>
                 <div className="min-w-0">

@@ -23,15 +23,15 @@ export function SpaceHamLoader() {
           <div className="stars absolute inset-0" aria-hidden />
           <div className="text-center">
             <motion.div
-              className="relative mx-auto grid h-24 w-24 place-items-center"
+              className="relative mx-auto grid h-28 w-28 place-items-center"
               animate={{ y: [0, -10, 0], rotate: [0, 0, 360, 360] }}
               transition={{
                 y: { duration: 2.2, repeat: Infinity, ease: "easeInOut" },
                 rotate: { duration: 1.9, times: [0, 0.35, 0.8, 1], ease: "easeInOut" },
               }}
             >
-              <span className="absolute inset-0 rounded-full border-2 border-white/50 bg-white/5 shadow-[inset_0_0_20px_rgba(160,220,255,0.35)]" />
-              <span className="text-5xl">🐹</span>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/characters/space-ham.png" alt="スペースハム" className="h-24 w-24 rounded-full [image-rendering:pixelated]" />
             </motion.div>
             <p className="mt-6 font-mono text-[10px] tracking-[0.4em] text-white/60">TUNING IN…</p>
           </div>

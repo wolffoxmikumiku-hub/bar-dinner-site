@@ -162,6 +162,8 @@ export type Shop = {
   opensWhen?: Condition;
   /** 閉店中に入ったときの一文 */
   closedNote?: string;
+  /** 店のイメージ画（public/ 以下）。店に入ると上部に並ぶ */
+  gallery?: { src: string; alt: string; caption?: string }[];
   /** 開くときの演出 */
   openEffect?: "static-burst" | "rainbow" | "steam";
   accent: "pink" | "mint" | "cinnamon" | "silver";
@@ -324,6 +326,7 @@ export const SHOPS: Shop[] = [
       "ストリートの最先端とスマートなスーツスタイルを融合させた、ギャップ（二面性）がテーマのセレクトショップ。デザインは基本白黒、毎回1箇所だけ7色の虹色を入れる。",
     goods: ["虹色の蝶々ワンポイント刺繍 ヘビーウェイトT", "モノトーンフラップキャップ（裏地が虹色迷彩）"],
     characters: ["husky"],
+    gallery: [{ src: "/characters/seven-percent-husky.jpg", alt: "7% の店主ハスキー。モノトーンの服に、虹色の蝶々がひとつ", caption: "店主ハスキー" }],
     openEffect: "rainbow",
     accent: "silver",
     sections: [
@@ -439,6 +442,10 @@ export const SHOPS: Shop[] = [
     concept: "独自の生命科学・哲学をベースにしたストリートカルトブランド。説明しすぎないこと自体がコンセプト。",
     goods: ["液体子猫ビッグシルエットパーカー", "口の中のミニ牛ソックス", "アクリルキーホルダー"],
     characters: ["kitten"],
+    gallery: [
+      { src: "/characters/moomoomeaw-key.jpg", alt: "牛乳瓶から注がれて猫になる液体子猫。口の中に小さな牛がいる", caption: "MooMooMeow キービジュアル" },
+      { src: "/characters/moomoomeaw-tee.jpg", alt: "液体子猫がプリントされたターコイズのTシャツ", caption: "液体子猫 T シャツ" },
+    ],
     accent: "pink",
     sections: [],
     source: "excel",
@@ -499,6 +506,8 @@ export type Character = {
   name: string;
   animal: string;
   emoji: string;
+  /** 顔アイコン（public/ 以下）。無ければ emoji */
+  image?: string;
   area: AreaId | "travel" | "space";
   shop?: ShopId;
   role: string;
@@ -516,6 +525,7 @@ export const CHARACTERS: Character[] = [
     name: "スペースハム",
     animal: "ハムスター",
     emoji: "🐹",
+    image: "/characters/space-ham.png",
     area: "space",
     role: "すべての始まり",
     look: "宇宙服・ヘルメット / 3頭身",
@@ -616,6 +626,7 @@ export const CHARACTERS: Character[] = [
     name: "ハスキー",
     animal: "ハスキー",
     emoji: "🐺",
+    image: "/characters/husky.jpg",
     area: "quartz",
     shop: "seven-percent",
     role: "店主",
@@ -643,7 +654,7 @@ export const CHARACTERS: Character[] = [
   { id: "spark", name: "スパーク", animal: "電気三兄弟・三男", emoji: "✨", area: "power", shop: "power-alley", role: "聞かざる", look: "フードは後ろに垂れ下がっている", personality: "超ハイテンション。画面を走り回ってクレジットを撒き散らす。", appearsWhen: "storm", source: "brief+excel" },
   { id: "yamasemi-brother", name: "ヤマセミ兄", animal: "ヤマセミ", emoji: "🐦", area: "travel", role: "出張：ジャンク・無骨ガジェット", personality: "各地区を渡り歩く出張屋台。", source: "brief" },
   { id: "yamasemi-sister", name: "ヤマセミ妹", animal: "ヤマセミ", emoji: "🐦", area: "travel", role: "出張：ゆめかわサイバー雑貨", personality: "兄と一緒に出張。シナブン堂とは仲良し。", source: "brief" },
-  { id: "kitten", name: "液体子猫", animal: "子猫", emoji: "🐱", area: "cpu", shop: "moomoomeaw", role: "謎の生命体", look: "とろっとした液体のようなシルエット", personality: "あくびをすると口の中に小さな牛がいる。", source: "excel" },
+  { id: "kitten", name: "液体子猫", animal: "子猫", emoji: "🐱", image: "/characters/kitten.jpg", area: "cpu", shop: "moomoomeaw", role: "謎の生命体", look: "とろっとした液体のようなシルエット", personality: "あくびをすると口の中に小さな牛がいる。", source: "excel" },
   { id: "lizard", name: "ジャックリーン", animal: "トカゲ", emoji: "🦎", area: "speaker", shop: "jack", role: "DJ", look: "中性的な姉さん", source: "excel" },
   { id: "penguin", name: "ペンギンの子", animal: "ペンギン", emoji: "🐧", area: "cooling", shop: "radiator-park", role: "アイス売り", source: "excel" },
 ];
