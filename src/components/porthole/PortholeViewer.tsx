@@ -20,9 +20,14 @@ import { meets } from "@/lib/reception";
 type FloorId = "1F" | "B1";
 /** 窓ガラスの形（シーン画像 1408x768 の座標）。雨はこの中にだけ降る */
 type Pane = { kind: "poly"; points: [number, number][] } | { kind: "ellipse"; cx: number; cy: number; rx: number; ry: number };
+/**
+ * 店内で動く住人（シーン画像から切り出したスプライト）。box = [x, y, w, h]（シーン画像 1408x768 の座標）
+ * anim は globals.css の .act-* クラス。trip はたまに画角の外へ出ていく動き
+ */
+type Actor = { id: string; box: [number, number, number, number]; anim: string; trip?: string; delay?: number };
 /** 閉店中に残る明かり（窓の外光など）。住人のいない場所だけを照らす。a = 明るさ 0..1 */
 type Light = { cx: number; cy: number; rx: number; ry: number; a: number };
-const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign: string; panes: Pane[]; paneTint: string; closedLights: Light[] }> = {
+const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign: string; panes: Pane[]; paneTint: string; closedLights: Light[]; openSrc?: string; actors: Actor[]; fx?: "grill" }> = {
   "1F": {
     shop: "collective-diner",
     src: "/scenes/diner-1f.webp",
@@ -33,6 +38,19 @@ const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign
       { kind: "poly", points: [[899, 155], [982, 195], [982, 267], [899, 235]] },
     ],
     paneTint: "rgba(74, 92, 120, 0.62)",
+    // 営業中は、バイソンとウェイトレスを抜いた背景の上に住人を重ねる
+    openSrc: "/scenes/diner-1f-open.webp",
+    fx: "grill",
+    actors: [
+      { id: "bison", box: [651, 178, 148, 293], anim: "act-cook", trip: "trip-kitchen" },
+      { id: "owl", box: [886, 317, 124, 183], anim: "act-read" },
+      { id: "fox", box: [472, 478, 106, 110], anim: "act-cheer", delay: 0 },
+      { id: "bunny", box: [392, 505, 65, 97], anim: "act-cheer", delay: 0.35 },
+      { id: "squirrel", box: [363, 552, 37, 55], anim: "act-cheer", delay: 0.7 },
+      { id: "raccoon1", box: [525, 583, 65, 68], anim: "act-chat", delay: 0.2 },
+      { id: "raccoon2", box: [455, 629, 56, 68], anim: "act-chat", delay: 0.9 },
+      { id: "waitress", box: [601, 393, 177, 248], anim: "act-skate", trip: "trip-serve" },
+    ],
     // 夜: 窓からの月明かり、ジュークボックスの残り灯、空いたスツールとボックス席
     closedLights: [
       { cx: 910, cy: 165, rx: 105, ry: 125, a: 1 },
@@ -49,6 +67,14 @@ const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign
     sign: "B1 BAR ／ Open 8 PM",
     panes: [{ kind: "ellipse", cx: 945, cy: 210, rx: 53, ry: 68 }],
     paneTint: "rgba(40, 52, 90, 0.35)",
+    actors: [
+      { id: "owl", box: [550, 288, 167, 194], anim: "act-polish" },
+      { id: "bat", box: [836, 415, 138, 181], anim: "act-breathe", delay: 0.4 },
+      { id: "mole", box: [962, 440, 92, 122], anim: "act-chat", delay: 0.1 },
+      { id: "mouse", box: [934, 397, 56, 63], anim: "act-cheer", delay: 0.5 },
+      { id: "raccoon", box: [665, 485, 142, 223], anim: "act-sip" },
+      { id: "firefly", box: [1073, 410, 29, 52], anim: "act-fly" },
+    ],
     // 昼: 丸い小窓からの外光と、酒棚のボトルだけ
     closedLights: [
       { cx: 945, cy: 210, rx: 95, ry: 115, a: 1 },
@@ -143,7 +169,13 @@ export function PortholeViewer() {
               >
                 <span className="porthole-scene">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={current.src} alt={open ? current.alt : `${currentShop.name} は閉店中。明かりが落ち、誰もいない`} className="block w-full" draggable={false} />
+                  <img
+                    src={open ? (current.openSrc ?? current.src) : current.src}
+                    alt={open ? current.alt : `${currentShop.name} は閉店中。明かりが落ち、誰もいない`}
+                    className="block w-full"
+                    draggable={false}
+                  />
+                  {open && <Actors floor={floor} actors={current.actors} fx={current.fx} />}
                   {!open && <LightsOff id={floor} lights={current.closedLights} />}
                   {rain && <WindowRain id={floor} panes={current.panes} tint={current.paneTint} storm={storm} />}
                 </span>
@@ -233,6 +265,49 @@ export function PortholeViewer() {
 
       <ShopModal shop={shop} onClose={() => setShop(null)} />
     </section>
+  );
+}
+
+const pct = (v: number, of: number) => `${(v / of) * 100}%`;
+
+/** 営業中の店内: 住人がそれぞれ動く（お客さんはワイワイ、店員は仕事中） */
+function Actors({ floor, actors, fx }: { floor: FloorId; actors: Actor[]; fx?: "grill" }) {
+  return (
+    <span className="absolute inset-0" aria-hidden>
+      {fx === "grill" && (
+        <span className="absolute" style={{ left: pct(540, 1408), top: pct(300, 768), width: pct(100, 1408), height: pct(60, 768) }}>
+          {Array.from({ length: 5 }, (_, i) => (
+            <span key={i} className="grill-smoke" style={{ left: `${10 + i * 18}%`, animationDelay: `${i * 0.55}s` }} />
+          ))}
+        </span>
+      )}
+      {floor === "1F" && (
+        <span className="absolute" style={{ left: pct(380, 1408), top: pct(470, 768), width: pct(200, 1408), height: pct(90, 768) }}>
+          {Array.from({ length: 8 }, (_, i) => (
+            <span key={i} className="confetti" style={{ left: `${6 + i * 12}%`, animationDelay: `${i * 0.4}s`, background: ["#ff5a7a", "#ffd24a", "#5ad1ff", "#8dff7a"][i % 4] }} />
+          ))}
+        </span>
+      )}
+      {actors.map((a) => {
+        const [x, y, w, h] = a.box;
+        return (
+          <span
+            key={a.id}
+            className={`actor ${a.trip ?? ""}`}
+            style={{ left: pct(x, 1408), top: pct(y, 768), width: pct(w, 1408), height: pct(h, 768) }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/scenes/sprites/${floor === "1F" ? "diner-1f" : "bar-b1"}-${a.id}.webp`}
+              alt=""
+              className={`block h-full w-full ${a.anim}`}
+              style={{ animationDelay: a.delay ? `${a.delay}s` : undefined }}
+              draggable={false}
+            />
+          </span>
+        );
+      })}
+    </span>
   );
 }
 

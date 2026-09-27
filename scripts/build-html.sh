@@ -11,5 +11,5 @@ rm -rf out
 cd "$D"
 # 絶対パス(/_next/, /scenes/, /characters/, /icon.svg)を相対パスに書き換え（file:// で読めるように）
 find . -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" -o -name "*.txt" \) -print0 \
-  | xargs -0 perl -pi -e 's#(["'"'"'(\x60])/_next/#$1./_next/#g; s#(["'"'"'(])/(scenes|characters)/#$1./$2/#g; s#(["'"'"'(])/icon\.svg#$1./icon.svg#g; s#indexOf\("\./_next/"\)#indexOf("/_next/")#g'
+  | xargs -0 perl -pi -e 's#(["'"'"'(\x60])/_next/#$1./_next/#g; s#(["'"'"'(\x60])/(scenes|characters)/#$1./$2/#g; s#(["'"'"'(])/icon\.svg#$1./icon.svg#g; s#indexOf\("\./_next/"\)#indexOf("/_next/")#g'
 echo "できました: $(pwd)/index.html"
