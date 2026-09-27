@@ -145,7 +145,7 @@ export function ShopModal({ shop, onClose }: { shop: Shop | null; onClose: () =>
                   {shop.characters.map((id) => {
                     const c = charById(id);
                     if (!c) return null;
-                    const here = !c.appearsWhen || (reception ? meets(reception, c.appearsWhen) : false);
+                    const here = !closed && (!c.appearsWhen || (reception ? meets(reception, c.appearsWhen) : false));
                     return (
                       <li key={id} className={`char-chip ${here ? "" : "opacity-40"}`}>
                         <span className="relative text-2xl">
@@ -161,8 +161,9 @@ export function ShopModal({ shop, onClose }: { shop: Shop | null; onClose: () =>
                           <b className="block truncate text-sm text-white">{c.name}</b>
                           <span className="block truncate text-[11px] text-emerald-50/60">
                             {c.role}
-                            {!here && c.appearsWhen === "rain" && "（雨の日に来る）"}
-                            {!here && c.appearsWhen === "storm" && "（雷の日に起きる）"}
+                            {closed && "（閉店中・不在）"}
+                            {!closed && !here && c.appearsWhen === "rain" && "（雨の日に来る）"}
+                            {!closed && !here && c.appearsWhen === "storm" && "（雷の日に起きる）"}
                           </span>
                         </span>
                       </li>

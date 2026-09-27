@@ -20,7 +20,9 @@ import { meets } from "@/lib/reception";
 type FloorId = "1F" | "B1";
 /** 窓ガラスの形（シーン画像 1408x768 の座標）。雨はこの中にだけ降る */
 type Pane = { kind: "poly"; points: [number, number][] } | { kind: "ellipse"; cx: number; cy: number; rx: number; ry: number };
-const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign: string; panes: Pane[]; paneTint: string }> = {
+/** 閉店中に残る明かり（窓の外光など）。住人のいない場所だけを照らす。a = 明るさ 0..1 */
+type Light = { cx: number; cy: number; rx: number; ry: number; a: number };
+const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign: string; panes: Pane[]; paneTint: string; closedLights: Light[] }> = {
   "1F": {
     shop: "collective-diner",
     src: "/scenes/diner-1f.webp",
@@ -31,6 +33,14 @@ const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign
       { kind: "poly", points: [[899, 155], [982, 195], [982, 267], [899, 235]] },
     ],
     paneTint: "rgba(74, 92, 120, 0.62)",
+    // 夜: 窓からの月明かり、ジュークボックスの残り灯、空いたスツールとボックス席
+    closedLights: [
+      { cx: 910, cy: 165, rx: 105, ry: 125, a: 1 },
+      { cx: 370, cy: 395, rx: 62, ry: 95, a: 0.55 },
+      { cx: 545, cy: 130, rx: 95, ry: 70, a: 0.3 },
+      { cx: 835, cy: 560, rx: 55, ry: 60, a: 0.45 },
+      { cx: 990, cy: 630, rx: 120, ry: 70, a: 0.6 },
+    ],
   },
   B1: {
     shop: "the-node",
@@ -39,6 +49,12 @@ const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign
     sign: "B1 BAR ／ Open 8 PM",
     panes: [{ kind: "ellipse", cx: 945, cy: 210, rx: 53, ry: 68 }],
     paneTint: "rgba(40, 52, 90, 0.35)",
+    // 昼: 丸い小窓からの外光と、酒棚のボトルだけ
+    closedLights: [
+      { cx: 945, cy: 210, rx: 95, ry: 115, a: 1 },
+      { cx: 385, cy: 350, rx: 85, ry: 125, a: 0.45 },
+      { cx: 665, cy: 150, rx: 60, ry: 50, a: 0.3 },
+    ],
   },
 };
 
@@ -127,11 +143,12 @@ export function PortholeViewer() {
               >
                 <span className="porthole-scene">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={current.src} alt={current.alt} className="block w-full" draggable={false} />
+                  <img src={current.src} alt={open ? current.alt : `${currentShop.name} は閉店中。明かりが落ち、誰もいない`} className="block w-full" draggable={false} />
+                  {!open && <LightsOff id={floor} lights={current.closedLights} />}
                   {rain && <WindowRain id={floor} panes={current.panes} tint={current.paneTint} storm={storm} />}
                 </span>
                 {!open && (
-                  <span className="absolute inset-0 grid place-items-center bg-[#050818]/70">
+                  <span className="absolute inset-0 grid place-items-center">
                     <span className="hang-sign">
                       <svg viewBox="0 0 100 40" className="hang-strings" aria-hidden>
                         <line x1="50" y1="5" x2="14" y2="40" />
@@ -216,6 +233,29 @@ export function PortholeViewer() {
 
       <ShopModal shop={shop} onClose={() => setShop(null)} />
     </section>
+  );
+}
+
+/** 閉店中: 照明を落とし、住人のいない場所にだけ外の光が残る */
+function LightsOff({ id, lights }: { id: string; lights: Light[] }) {
+  return (
+    <svg viewBox="0 0 1408 768" className="absolute inset-0 h-full w-full" aria-hidden>
+      <defs>
+        <filter id={`soft-${id}`} x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="22" />
+        </filter>
+        <mask id={`lights-${id}`} maskUnits="userSpaceOnUse" x="0" y="0" width="1408" height="768">
+          <rect width="1408" height="768" fill="#fff" />
+          <g filter={`url(#soft-${id})`}>
+            {lights.map((l, i) => (
+              <ellipse key={i} cx={l.cx} cy={l.cy} rx={l.rx} ry={l.ry} fill="#000" fillOpacity={l.a} />
+            ))}
+          </g>
+        </mask>
+      </defs>
+      <rect width="1408" height="768" fill="#03050c" fillOpacity={0.992} mask={`url(#lights-${id})`} />
+      <rect width="1408" height="768" fill="#2a3a66" fillOpacity={0.18} style={{ mixBlendMode: "multiply" }} />
+    </svg>
   );
 }
 
