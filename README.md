@@ -41,7 +41,7 @@ src/
       PcbCanvas.tsx       Three.js フルスクリーン描画、画面外で停止、WebGL不可時はCSSフォールバック
       TunerDial.tsx       画面上部のサウンドコントロール（SOUND ON/OFF + 音量つまみ/目盛りドラッグ/矢印キー）
       Hero.tsx            ヒーロー + 「銀色の鏡面広場」 + 受信ログ
-    porthole/PortholeViewer.tsx  受信ダッシュボード：左に真鍮の丸窓（1F/B1切替・CLOSED札・窓の外の雨・動く住人・お土産ショップ）、右に地図（ワープタグ）・Diner/Bar カード・DATA STREAM LOG
+    porthole/PortholeViewer.tsx  SIGNAL RECEIVER：ヘッダー（CREDIT/ITEMS/TIME）＋タブ（RECEIVER / PROJECT LOGS / BACK ALLEY）。MAIN は左ログ・中央CRT丸窓・右地図、Diner/Bar 特設ページ（注文でクレジット）、裏路地スロット
     map/
       BoardArt.tsx        全体基板マップのSVG（部品＝エリア）
       MapBoard.tsx        地図のピン（ホバー発光＋店名）、条件付き訪問客

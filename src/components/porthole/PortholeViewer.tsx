@@ -5,8 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRadio } from "@/components/RadioProvider";
 import { ShopModal } from "@/components/map/ShopModal";
 import { MapBoard } from "@/components/map/MapBoard";
-import { shopById, type Shop } from "@/data/world";
-import { WEATHER_LABEL } from "@/lib/reception";
+import { SHOPS, shopById, type Shop } from "@/data/world";
 import { meets } from "@/lib/reception";
 
 /**
@@ -94,7 +93,7 @@ function useClock() {
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
     setNow(new Date());
-    const t = window.setInterval(() => setNow(new Date()), 15_000);
+    const t = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(t);
   }, []);
   return now;
@@ -107,12 +106,46 @@ function timeLabel(d: Date) {
   return `${h12}:${String(d.getMinutes()).padStart(2, "0")} ${h < 12 ? "AM" : "PM"} (${part})`;
 }
 
+type Page = "main" | "logs" | "alley" | "shop-1F" | "shop-B1";
+
+/** ブラウザに記憶するクレジットと景品（ゲーム内だけのもの。実際の支払いはない） */
+function useWallet() {
+  const [credit, setCredit] = useState(100);
+  const [items, setItems] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const c = localStorage.getItem("pcb:credit");
+      if (c != null) setCredit(Number(c) || 0);
+      const i = localStorage.getItem("pcb:items");
+      if (i) setItems(JSON.parse(i));
+    } catch {}
+  }, []);
+  const save = (c: number, i: string[]) => {
+    setCredit(c);
+    setItems(i);
+    try {
+      localStorage.setItem("pcb:credit", String(c));
+      localStorage.setItem("pcb:items", JSON.stringify(i));
+    } catch {}
+  };
+  return { credit, items, save };
+}
+
+/**
+ * SIGNAL RECEIVER（受信ダッシュボード）
+ *  - RECEIVER (MAIN): 左に受信ログ、中央にCRTモニター（丸窓カメラ）、右に基板の地図（ワープタグ）
+ *  - 地図の DINER / BAR チップ、またはモニターの ENTER で各店の特設ページへ
+ *  - 店で買い物（シミュレート）をするとクレジットが貯まり、裏路地のスロットで使える
+ */
 export function PortholeViewer() {
   const { reception, glitch, enterShop } = useRadio();
   const now = useClock();
+  const wallet = useWallet();
+  const [page, setPage] = useState<Page>("main");
   const [floor, setFloor] = useState<FloorId>("1F");
-  const [souvenir, setSouvenir] = useState(false);
   const [shop, setShop] = useState<Shop | null>(null);
+  const [hoverInfo, setHoverInfo] = useState<{ text: string; tone: string } | null>(null);
+  const [noise, setNoise] = useState(0);
 
   // 夜にアクセスしたら最初からB1を覗く
   useEffect(() => {
@@ -121,199 +154,380 @@ export function PortholeViewer() {
 
   const rain = reception ? meets(reception, "rain") : false;
   const storm = reception?.weather === "storm";
-  const hour = now?.getHours() ?? 12;
-  const souvenirOpen = hour >= 10 && hour < 20;
   const current = FLOORS[floor];
   const currentShop = shopById(current.shop);
   const open = reception ? meets(reception, currentShop.opensWhen) : true;
+  const night = reception?.isNight ?? false;
 
-  // お土産ショップ（EC）を開いている間は、その店のBGM
-  useEffect(() => {
-    if (!souvenir) return;
-    enterShop(currentShop.id);
-    return () => enterShop(null);
-  }, [souvenir, currentShop.id, enterShop]);
-
-  // 地図のワープタグ: Diner / Bar は丸窓のフロアを切り替え、それ以外は店に入る
+  const buzz = (s = 0.35) => {
+    glitch(s);
+    setNoise((n) => n + 1);
+  };
+  const switchFloor = (f: FloorId) => {
+    if (f === floor) return;
+    buzz();
+    setFloor(f);
+  };
+  const go = (p: Page) => {
+    if (p === page) return;
+    buzz(0.25);
+    setPage(p);
+  };
+  // 地図のワープタグ: Diner / Bar は特設ページへ、ほかの店はその場で入店
   const warp = (s: Shop) => {
-    if (s.id === "collective-diner") return switchFloor("1F");
-    if (s.id === "the-node") return switchFloor("B1");
+    if (s.id === "collective-diner") return (setFloor("1F"), go("shop-1F"));
+    if (s.id === "the-node") return (setFloor("B1"), go("shop-B1"));
     if (s.openEffect === "static-burst") glitch(0.9);
     setShop(s);
   };
 
-  const switchFloor = (f: FloorId) => {
-    if (f === floor) return;
-    glitch(0.35);
-    setFloor(f);
-  };
-
   return (
-    <section id="live" className="relative mx-auto max-w-7xl px-4 py-20 sm:py-28">
-      <p className="font-mono text-xs tracking-[0.3em] text-[var(--cinnamon)]">FIXED-POINT MONITOR</p>
-      <h2 className="mt-2 text-2xl font-black text-white sm:text-4xl">丸窓から、中心街をのぞく</h2>
-
-      <div className="mt-8 grid items-start gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-      {/* ── 左: 受信モニター ── */}
-      <div className="min-w-0">
-        <div className="dash-status">
-          <span><b className="text-[var(--mint)]">●</b> SIGNAL: {reception ? "RECEIVING" : "SEARCHING…"}</span>
-          <span>WEATHER: {reception ? WEATHER_LABEL[reception.weather] : "---"}</span>
-          <span className="tabular-nums">TIME: {now ? now.toTimeString().slice(0, 8) : "--:--:--"}</span>
+    <section id="live" className="receiver relative mx-auto max-w-[1500px] px-4 py-16 sm:py-24">
+      <header className="rx-header">
+        <div className="flex min-w-0 items-center">
+          <span className="rx-dot" style={{ ["--dot" as string]: night ? "#b388ff" : "#ffd54f" }} />
+          <span className="truncate">
+            {reception ? `STATUS: ONLINE // ${night ? "BAR: THE NODE" : "COLLECTIVE DINER"} CONTROL` : "SIGNAL: RECEIVING..."}
+          </span>
         </div>
-        <p className="dash-title">RECEIVER (MAIN) ／ {current.shop === "the-node" ? "B1 BAR: THE NODE" : "1F COLLECTIVE DINER"}</p>
-      <div className="porthole-plate compact">
-        {/* フロア切替 */}
-        <div className="floor-tabs" role="tablist" aria-label="フロア">
-          {(["1F", "B1"] as FloorId[]).map((f) => (
-            <button key={f} role="tab" aria-selected={floor === f} onClick={() => switchFloor(f)}>
-              {f}
-            </button>
-          ))}
-        </div>
-
-        {/* 丸窓 */}
-        <div className="porthole">
-          <div className="porthole-glass">
-            <AnimatePresence initial={false} mode="popLayout">
-              <motion.button
-                key={floor}
-                onClick={() => setShop(currentShop)}
-                className="absolute inset-0 block cursor-zoom-in"
-                aria-label={`${currentShop.name} に入る`}
-                initial={{ y: floor === "B1" ? "100%" : "-100%", filter: "brightness(2) contrast(0.6)" }}
-                animate={{ y: 0, filter: "brightness(1) contrast(1)" }}
-                exit={{ y: floor === "B1" ? "-100%" : "100%" }}
-                transition={{ type: "spring", stiffness: 120, damping: 20 }}
-              >
-                <span className="porthole-scene">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={open ? (current.openSrc ?? current.src) : current.src}
-                    alt={open ? current.alt : `${currentShop.name} は閉店中。明かりが落ち、誰もいない`}
-                    className="block w-full"
-                    draggable={false}
-                  />
-                  {open && <Actors floor={floor} actors={current.actors} fx={current.fx} />}
-                  {!open && <LightsOff id={floor} lights={current.closedLights} />}
-                  {rain && <WindowRain id={floor} panes={current.panes} tint={current.paneTint} storm={storm} />}
-                </span>
-                {!open && (
-                  <span className="absolute inset-0 grid place-items-center">
-                    <span className="hang-sign">
-                      <svg viewBox="0 0 100 40" className="hang-strings" aria-hidden>
-                        <line x1="50" y1="5" x2="14" y2="40" />
-                        <line x1="50" y1="5" x2="86" y2="40" />
-                        <circle cx="50" cy="5" r="4" />
-                      </svg>
-                      <span className="closed-sign">
-                        CLOSED
-                        <small>{current.sign}</small>
-                      </span>
-                    </span>
-                  </span>
-                )}
-              </motion.button>
-            </AnimatePresence>
-            <span className="porthole-glare" aria-hidden />
+        <div className="rx-wallet">
+          <div className="rx-wallet-item">
+            CREDIT: <b className="text-[#ffd54f] [text-shadow:0_0_5px_rgba(255,213,79,.5)]">{wallet.credit}</b>
           </div>
-          {Array.from({ length: 8 }, (_, i) => {
-            const a = ((i * 45 + 22.5) * Math.PI) / 180;
-            return <span key={i} className="bolt-head" style={{ left: `${50 + 46.5 * Math.sin(a)}%`, top: `${50 - 46.5 * Math.cos(a)}%` }} aria-hidden />;
-          })}
+          <div className="rx-wallet-item">
+            ITEMS: <b className="text-[#4af2a1]">{wallet.items.length ? wallet.items.join(", ") : "NONE"}</b>
+          </div>
+          <div className="tabular-nums">TIME: {now ? now.toTimeString().slice(0, 8) : "--:--:--"}</div>
         </div>
+      </header>
 
-        {/* TIME / CALENDAR / LIVE FEED */}
-        <dl className="feed-panel">
-          <dt>TIME:</dt>
-          <dd>{now ? timeLabel(now) : "--:--"}</dd>
-          <hr />
-          <dt>CALENDAR:</dt>
-          <dd>{now ? `${WEEK[now.getDay()]}, ${MONTH[now.getMonth()]} ${ordinal(now.getDate())}` : "---"}</dd>
-          <hr />
-          <dd className="live">
-            <span className="live-dot" /> LIVE FEED
-            {rain && <span className="ml-2 text-[#5b7fa6]">☂ RAIN</span>}
-          </dd>
-        </dl>
-
-        {/* お土産ショップ */}
-        <button className="souvenir-tab" onClick={() => setSouvenir(true)} aria-haspopup="dialog">
-          SOUVENIR SHOP {souvenirOpen ? `[OPEN / ${floor === "1F" ? "DINER" : "BAR"} MERCH]` : "[CLOSED]"}
+      <nav className="rx-tags" aria-label="受信ページ">
+        <button className="rx-tag" data-active={page === "main" || undefined} onClick={() => go("main")}>
+          RECEIVER (MAIN)
         </button>
-      </div>
+        <button className="rx-tag" data-active={page === "logs" || undefined} onClick={() => go("logs")}>
+          PROJECT LOGS
+        </button>
+        <button className="rx-tag rx-tag-alley" data-active={page === "alley" || undefined} onClick={() => go("alley")}>
+          BACK ALLEY (裏路地)
+        </button>
+      </nav>
 
-      <p className="mt-3 text-center text-xs text-emerald-50/50">
-        窓をクリックすると店に入れます。{rain && "雨の日はB1の隅に、トレンチコートの客がいるらしい。"}
-      </p>
-      </div>
+      <AnimatePresence mode="wait">
+        <motion.div key={page} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }}>
+          {page === "main" && (
+            <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.6fr)_minmax(0,1fr)]">
+              {/* 左: 受信ログ */}
+              <div className="order-3 lg:order-1">
+                <DataLog floor={floor} open={open} rain={rain} />
+              </div>
 
-      {/* ── 右: 地図（ワープタグ）・店・ログ ── */}
-      <div className="min-w-0 space-y-4">
-        <div id="map" className="dash-panel scroll-mt-24">
-          <p className="dash-title">MAP NODE (WARP TAG)</p>
-          <MapBoard onPick={warp} current={current.shop} compact />
-          <p className="mt-2 font-mono text-[10px] text-emerald-50/50">ピンをクリック：DINER / BAR は丸窓が切り替わり、ほかの店はそのまま入店。</p>
-        </div>
+              {/* 中央: CRTモニター（丸窓カメラ） */}
+              <div className="order-1 lg:order-2">
+                <div className="crt-frame">
+                  <div className="crt-view">
+                    <span key={noise} className="crt-noise" aria-hidden />
+                    <div className="crt-cam">
+                      <div className="porthole">
+                        <div className="porthole-glass">
+                          <AnimatePresence initial={false} mode="popLayout">
+                            <motion.button
+                              key={floor}
+                              onClick={() => go(floor === "1F" ? "shop-1F" : "shop-B1")}
+                              className="absolute inset-0 block cursor-zoom-in"
+                              aria-label={`${currentShop.name} に入る`}
+                              initial={{ y: floor === "B1" ? "100%" : "-100%", filter: "brightness(2) contrast(0.6)" }}
+                              animate={{ y: 0, filter: "brightness(1) contrast(1)" }}
+                              exit={{ y: floor === "B1" ? "-100%" : "100%" }}
+                              transition={{ type: "spring", stiffness: 120, damping: 20 }}
+                            >
+                              <span className="porthole-scene">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={open ? (current.openSrc ?? current.src) : current.src}
+                                  alt={open ? current.alt : `${currentShop.name} は閉店中。明かりが落ち、誰もいない`}
+                                  className="block w-full"
+                                  draggable={false}
+                                />
+                                {open && <Actors floor={floor} actors={current.actors} fx={current.fx} />}
+                                {!open && <LightsOff id={floor} lights={current.closedLights} />}
+                                {rain && <WindowRain id={floor} panes={current.panes} tint={current.paneTint} storm={storm} />}
+                              </span>
+                              {!open && (
+                                <span className="absolute inset-0 grid place-items-center">
+                                  <span className="hang-sign">
+                                    <svg viewBox="0 0 100 40" className="hang-strings" aria-hidden>
+                                      <line x1="50" y1="5" x2="14" y2="40" />
+                                      <line x1="50" y1="5" x2="86" y2="40" />
+                                      <circle cx="50" cy="5" r="4" />
+                                    </svg>
+                                    <span className="closed-sign">
+                                      CLOSED
+                                      <small>{current.sign}</small>
+                                    </span>
+                                  </span>
+                                </span>
+                              )}
+                            </motion.button>
+                          </AnimatePresence>
+                          <span className="porthole-glare" aria-hidden />
+                        </div>
+                        {Array.from({ length: 8 }, (_, i) => {
+                          const a = ((i * 45 + 22.5) * Math.PI) / 180;
+                          return <span key={i} className="bolt-head" style={{ left: `${50 + 46.5 * Math.sin(a)}%`, top: `${50 - 46.5 * Math.cos(a)}%` }} aria-hidden />;
+                        })}
+                      </div>
+                    </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          {(["1F", "B1"] as FloorId[]).map((f) => {
-            const s = shopById(FLOORS[f].shop);
-            const isOpen = reception ? meets(reception, s.opensWhen) : true;
-            return (
-              <button key={f} onClick={() => switchFloor(f)} className="warp-card" data-active={floor === f || undefined}>
-                <span className="flex items-center justify-between gap-2 font-mono text-[10px] tracking-widest">
-                  <span>{f} ／ {f === "1F" ? "5:00–20:00" : "20:00–5:00"}</span>
-                  <span className={isOpen ? "text-[var(--mint)]" : "text-amber-200/70"}>{isOpen ? "● OPEN" : "CLOSED"}</span>
-                </span>
-                <b className="mt-1 block text-sm text-white">{s.name}</b>
-                <span className="mt-1 block text-xs leading-relaxed text-emerald-50/70">{s.tagline}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        <DataLog floor={floor} open={open} rain={rain} />
-      </div>
-      </div>
-
-      {/* お土産ドロワー */}
-      <AnimatePresence>
-        {souvenir && (
-          <motion.div className="fixed inset-0 z-50 bg-black/60" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSouvenir(false)}>
-            <motion.aside
-              role="dialog"
-              aria-label="お土産ショップ"
-              onClick={(e) => e.stopPropagation()}
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "spring", stiffness: 260, damping: 30 }}
-              className="souvenir-drawer absolute inset-y-0 right-0 w-full max-w-sm overflow-y-auto p-6"
-            >
-              <button onClick={() => setSouvenir(false)} className="float-right font-mono text-xs opacity-60 hover:opacity-100">
-                ✕ CLOSE
-              </button>
-              <p className="font-mono text-[10px] tracking-[0.3em] opacity-70">SOUVENIR SHOP</p>
-              <h3 className="mt-1 text-xl font-bold">{currentShop.name} のおみやげ</h3>
-              <p className="mt-2 text-xs opacity-70">{souvenirOpen ? "営業中（10:00–20:00）" : "本日の受付は終了しました（10:00–20:00）"}</p>
-              <ul className="mt-5 space-y-2">
-                {(currentShop.goods ?? []).map((g) => (
-                  <li key={g} className="flex items-center justify-between gap-3 rounded-md border border-current/20 px-3 py-2.5 text-sm">
-                    <span>{g}</span>
-                    <button disabled={!souvenirOpen} className="shrink-0 rounded px-2 py-1 font-mono text-[10px] ring-1 ring-current/40 disabled:opacity-30">
-                      {souvenirOpen ? "CART" : "SOLD OUT"}
+                    {/* モニター上のHUD */}
+                    <p className="crt-hud left-3 top-3">
+                      <span className="live-dot" /> CAM {floor} // {floor === "1F" ? "COLLECTIVE DINER" : "BAR: THE NODE"}
+                      {rain && <span className="ml-2 text-[#8fb4ff]">☂ RAIN</span>}
+                    </p>
+                    <div className="crt-hud right-3 top-3 flex gap-1.5" role="tablist" aria-label="フロア">
+                      {(["1F", "B1"] as FloorId[]).map((f) => (
+                        <button key={f} role="tab" aria-selected={floor === f} onClick={() => switchFloor(f)} className="crt-btn">
+                          {f}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="crt-hud bottom-3 left-3">
+                      {now ? `${timeLabel(now)} · ${WEEK[now.getDay()]}, ${MONTH[now.getMonth()]} ${ordinal(now.getDate())}` : "--:--"}
+                    </p>
+                    <button className="crt-hud crt-btn bottom-3 right-3" onClick={() => go(floor === "1F" ? "shop-1F" : "shop-B1")}>
+                      {open ? "ENTER ▶" : "CLOSED ／ PEEK ▶"}
                     </button>
-                  </li>
-                ))}
-              </ul>
-            </motion.aside>
-          </motion.div>
-        )}
+                  </div>
+                </div>
+                <p className="mt-2 text-center font-mono text-[10px] text-white/35">
+                  [ {night ? "NIGHT MODE // 20:00 – 5:00" : "DAYLIGHT MODE // 5:00 – 20:00"} ] 窓をクリックすると店に入れます
+                </p>
+              </div>
+
+              {/* 右: 地図 */}
+              <div id="map" className="rx-panel order-2 scroll-mt-24 lg:order-3">
+                <p className="rx-title">MAP NODE (WARP TAG)</p>
+                <MapBoard
+                  onPick={warp}
+                  current={current.shop}
+                  compact
+                  onHover={(s) =>
+                    setHoverInfo(
+                      s
+                        ? s.id === "collective-diner"
+                          ? { text: "CPU:01 // COLLECTIVE DINER [ENTER]", tone: "#ffd54f" }
+                          : s.id === "the-node"
+                            ? { text: "CPU:02 // BAR: THE NODE [ENTER]", tone: "#b388ff" }
+                            : { text: s.name, tone: "#4af2a1" }
+                        : null,
+                    )
+                  }
+                />
+                <p className="mt-3 min-h-4 text-center font-mono text-[11px]" style={{ color: hoverInfo?.tone ?? "#666" }}>
+                  {hoverInfo?.text ?? "ピンに触れると回路が光る"}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {(page === "shop-1F" || page === "shop-B1") && (
+            <ShopPage
+              floor={page === "shop-1F" ? "1F" : "B1"}
+              onBack={() => go("main")}
+              onBuy={(name, reward) => {
+                wallet.save(wallet.credit + reward, wallet.items);
+                return `「${name}」をシミュレート購入しました。+${reward} CREDIT`;
+              }}
+              enterShop={enterShop}
+            />
+          )}
+
+          {page === "logs" && (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {SHOPS.map((s) => (
+                <button key={s.id} className="rx-card text-left" onClick={() => warp(s)}>
+                  <p className="font-mono text-sm font-bold tracking-wider text-white">{s.name}</p>
+                  <p className="mt-1 text-xs text-[var(--pink)]">{s.tagline}</p>
+                  <p className="mt-3 text-[13px] leading-relaxed text-white/55">{s.concept}</p>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {page === "alley" && <BackAlley wallet={wallet} />}
+        </motion.div>
       </AnimatePresence>
 
       <ShopModal shop={shop} onClose={() => setShop(null)} />
     </section>
+  );
+}
+
+/** 各店の特設ページ（メニューを“買う”とクレジットが貯まる） */
+function ShopPage({
+  floor,
+  onBack,
+  onBuy,
+  enterShop,
+}: {
+  floor: FloorId;
+  onBack: () => void;
+  onBuy: (name: string, reward: number) => string;
+  enterShop: (id: string | null, closed?: boolean) => void;
+}) {
+  const { reception } = useRadio();
+  const s = shopById(FLOORS[floor].shop);
+  const open = reception ? meets(reception, s.opensWhen) : true;
+  const [toast, setToast] = useState<string | null>(null);
+  const bar = floor === "B1";
+  const keeper = bar ? FLOORS.B1.actors.find((a) => a.id === "owl")! : FLOORS["1F"].actors.find((a) => a.id === "bison")!;
+
+  useEffect(() => {
+    enterShop(s.id, !open);
+    return () => enterShop(null);
+  }, [s.id, open, enterShop]);
+
+  const items = s.sections.flatMap((sec) => (sec.activeWhen && reception && !meets(reception, sec.activeWhen) ? [] : sec.items));
+  const goods = (s.goods ?? []).map((g) => ({ name: g, note: "おみやげ", price: undefined as string | undefined }));
+  const balloon = !open
+    ? s.closedNote ?? "ただいま準備中。"
+    : bar
+      ? "いらっしゃい。貯まったクレジットは『裏路地』で使えるらしい……ここだけの話だがね。"
+      : "よく来たな！ 注文するとクレジットが貯まるぜ。";
+
+  return (
+    <div className={`shop-page ${bar ? "shop-page-bar" : "shop-page-diner"}`}>
+      <div className="flex items-center justify-between gap-3 font-mono text-[11px]">
+        <span style={{ color: bar ? "#b388ff" : "#ffd54f" }}>[ NODE_0{bar ? 2 : 1} // INSIDE THE {bar ? "BAR" : "DINER"} ]</span>
+        <button onClick={onBack} className="rx-tag">
+          ← RECEIVER
+        </button>
+      </div>
+      <h3 className="mt-4 text-2xl font-black tracking-wider text-white sm:text-3xl">{s.name}</h3>
+      <p className="mt-1 text-sm" style={{ color: bar ? "#b388ff" : "#ffd54f" }}>
+        {s.tagline} {!open && "（CLOSED）"}
+      </p>
+
+      <div className="relative z-[2] mt-6 grid gap-4 pr-0 sm:grid-cols-2 lg:grid-cols-3 lg:pr-[260px]">
+        {[...items, ...goods].map((it) => {
+          const cr = it.price ? parseInt(it.price, 10) : 5;
+          const reward = cr * 10;
+          return (
+            <button
+              key={it.name}
+              disabled={!open}
+              className="product-card"
+              onClick={() => {
+                setToast(onBuy(it.name, reward));
+                window.setTimeout(() => setToast(null), 2200);
+              }}
+            >
+              <span className="block text-sm font-bold" style={{ color: bar ? "#d6c1ff" : "#ffe08a" }}>
+                {it.name}
+              </span>
+              {it.note && <span className="mt-1 block text-[11px] text-white/45">{it.note}</span>}
+              <span className="mt-2 block font-mono text-xs text-white/50">{it.price ?? "GOODS"}</span>
+              <span className="mt-1 block font-mono text-[11px] text-[#4af2a1]">{open ? `+${reward} CREDIT` : "CLOSED"}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 店主がひょっこり */}
+      <div className="shopkeeper">
+        <p className="shopkeeper-balloon" style={{ borderColor: bar ? "#4a3270" : "#5c431d" }}>
+          {balloon}
+        </p>
+        {open && (
+          <span className="shopkeeper-avatar" style={{ aspectRatio: `${keeper.box[2]} / ${keeper.box[3] * 0.72}` }}>
+            {/* 上半身だけ（カウンターから顔を出している感じ） */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/scenes/sprites/${bar ? "bar-b1" : "diner-1f"}-${keeper.id}.webp`}
+              alt={bar ? "マスターのフクロウ" : "店長のバイソン"}
+              className="block w-full [image-rendering:pixelated]"
+            />
+          </span>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {toast && (
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-md border border-[#4af2a1]/40 bg-black/85 px-4 py-2 font-mono text-xs text-[#4af2a1]"
+          >
+            {toast}
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+const REEL = ["🍔", "🍸", "⚡", "🔋", "7️⃣", "🦬"];
+
+/** 裏路地スロット（パワー横丁の奥。クレジットを使う） */
+function BackAlley({ wallet }: { wallet: ReturnType<typeof useWallet> }) {
+  const [reels, setReels] = useState(["🍔", "🍸", "⚡"]);
+  const [spinning, setSpinning] = useState(false);
+  const [msg, setMsg] = useState<{ t: string; c: string } | null>(null);
+
+  const spin = () => {
+    if (spinning) return;
+    if (wallet.credit < 50) return setMsg({ t: "ERROR: CREDIT INSUFFICIENT — 店で注文してクレジットを貯めよう", c: "#ff6b6b" });
+    let credit = wallet.credit - 50;
+    wallet.save(credit, wallet.items);
+    setSpinning(true);
+    setMsg({ t: "SPINNING...", c: "#aaa" });
+    let n = 0;
+    const pick = () => REEL[Math.floor(Math.random() * REEL.length)];
+    const timer = window.setInterval(() => {
+      const r = [pick(), pick(), pick()];
+      setReels(r);
+      if (++n > 15) {
+        window.clearInterval(timer);
+        setSpinning(false);
+        let items = wallet.items;
+        if (r[0] === r[1] && r[1] === r[2]) {
+          const prize = r[0] === "7️⃣" ? "GOLD 27A BATTERY" : "PREMIUM CHIP";
+          if (!items.includes(prize)) items = [...items, prize];
+          setMsg(r[0] === "7️⃣" ? { t: "🎉 JACKPOT!!! 金の27A電池を獲得！", c: "#ffd54f" } : { t: "🎁 WIN!! プレミアムチップ獲得！", c: "#4af2a1" });
+        } else if (r[0] === r[1] || r[1] === r[2] || r[0] === r[2]) {
+          credit += 30;
+          setMsg({ t: "✨ TWO PAIR! +30 CREDIT 還元", c: "#a7ffeb" });
+        } else setMsg({ t: "MISS // TRY AGAIN", c: "#666" });
+        wallet.save(credit, items);
+      }
+    }, 80);
+  };
+
+  return (
+    <div className="alley">
+      <p className="font-mono text-xs text-[#4af2a1]">[ POWER ALLEY // BACK ALLEY SLOT ]</p>
+      <div className="slot-machine">
+        <p className="slot-title">CIRCUIT SLOT</p>
+        <div className="slot-reels">
+          {reels.map((r, i) => (
+            <span key={i} className="reel">
+              {r}
+            </span>
+          ))}
+        </div>
+        <button className="slot-btn" onClick={spin} disabled={spinning}>
+          SPIN REELS
+        </button>
+        <p className="mt-2 font-mono text-[11px] text-white/40">COST: 50 CREDIT / SPIN</p>
+        <p className="mt-4 min-h-6 font-mono text-sm font-bold" style={{ color: msg?.c ?? "#aaa" }}>
+          {msg?.t}
+        </p>
+      </div>
+      <p className="mt-5 max-w-sm text-center text-xs leading-relaxed text-white/40">
+        電源・暴走エリアの裏路地。フードを被った三兄弟の長男・ボルトが、黙って台の番をしている。
+      </p>
+    </div>
   );
 }
 
@@ -341,8 +555,8 @@ function DataLog({ floor, open, rain }: { floor: FloorId; open: boolean; rain: b
 
   const extra = `${floor === "1F" ? "MONITOR → 1F DINER" : "MONITOR → B1 BAR"}${open ? "" : " (NO ONE HERE)"}${rain ? " // RAIN ON WINDOWS" : ""}`;
   return (
-    <div className="dash-panel">
-      <p className="dash-title">DATA STREAM LOG</p>
+    <div className="rx-panel rx-log">
+      <p className="rx-title">DATA STREAM LOG</p>
       <ul className="font-mono text-[10px] leading-relaxed text-emerald-50/45 sm:text-[11px]">
         {lines.map((l, i) => (
           <li key={i}>

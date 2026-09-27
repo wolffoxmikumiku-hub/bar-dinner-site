@@ -768,3 +768,242 @@ body {
 .map-compact .pin { width: 26px; height: 26px; }
 .map-compact .pin-dot, .map-compact .pin-pulse { width: 10px; height: 10px; }
 .pin[data-current] .pin-dot { box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.55), 0 0 18px 6px var(--pin); }
+
+/* ── SIGNAL RECEIVER（受信ダッシュボード） ───────── */
+.receiver { font-family: var(--font-mono-x); }
+.rx-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #1a1a1a;
+  font-size: 12px;
+  color: #777;
+}
+.rx-dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-right: 10px;
+  border-radius: 50%;
+  background: var(--dot);
+  box-shadow: 0 0 8px var(--dot);
+}
+.rx-wallet { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.rx-wallet-item { padding: 4px 12px; background: #111; border: 1px solid #222; border-radius: 4px; }
+.rx-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 22px 0 28px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #222;
+}
+.rx-tag {
+  padding: 6px 16px;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #888;
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+.rx-tag:hover, .rx-tag[data-active] { color: #fff; border-color: #444; background: #151515; }
+.rx-tag-alley { color: #4af2a1; border-color: #14291e; }
+.rx-panel { padding: 18px; background: #111; border: 1px solid #222; border-radius: 8px; }
+.rx-title {
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #888;
+  border-bottom: 1px solid #222;
+}
+.rx-log { min-height: 200px; }
+@media (min-width: 1024px) { .rx-log { height: 440px; overflow-y: auto; } }
+.rx-card { padding: 22px; background: #111; border: 1px solid #222; border-radius: 8px; transition: border-color 0.2s; }
+.rx-card:hover { border-color: #444; }
+
+/* CRTモニター */
+.crt-frame {
+  padding: 12px;
+  background: linear-gradient(135deg, #282828 0%, #161616 100%);
+  border: 2px solid #3a3a3a;
+  border-bottom-color: #111;
+  border-right-color: #111;
+  border-radius: 16px;
+  box-shadow: inset 0 3px 5px rgba(255, 255, 255, 0.2), 0 15px 35px rgba(0, 0, 0, 0.8);
+}
+.crt-view {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 8px;
+  background: radial-gradient(circle at 50% 50%, #0d100e, #000 75%);
+  box-shadow: inset 0 0 40px #000;
+}
+.crt-view::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0.8;
+  background:
+    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%),
+    linear-gradient(90deg, rgba(255, 0, 0, 0.015), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.015));
+  background-size: 100% 5px, 6px 100%;
+}
+.crt-view::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.25) 100%);
+}
+@media (min-width: 640px) { .crt-view { aspect-ratio: 16 / 10; } }
+.crt-cam { position: absolute; inset: 0; display: grid; place-items: center; }
+.crt-cam .porthole { width: auto; height: 80%; }
+@media (min-width: 640px) { .crt-cam .porthole { height: 90%; } }
+.crt-cam .closed-sign { font-size: 20px; padding: 8px 14px; }
+.crt-noise {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  animation: crt-noise 0.6s step-end;
+}
+@keyframes crt-noise {
+  0% { opacity: 1; background: #000 radial-gradient(#fff 1px, transparent 1px) 0 0 / 5px 5px; }
+  30% { background: linear-gradient(90deg, #f00 50%, #00f 50%) 0 0 / 10px 10px; }
+  70% { opacity: 1; background: #000 radial-gradient(#f0f 2px, transparent 2px) 0 0 / 15px 15px; }
+  100% { opacity: 0; }
+}
+.crt-hud {
+  position: absolute;
+  z-index: 14;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgba(220, 255, 235, 0.75);
+  text-shadow: 0 0 6px rgba(74, 242, 161, 0.5);
+}
+.crt-btn {
+  padding: 3px 9px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #cfe;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(74, 242, 161, 0.35);
+  border-radius: 4px;
+}
+.crt-btn:hover, .crt-btn[aria-selected="true"] { color: #000; background: #4af2a1; }
+
+/* 地図: ホバーで回路がバチバチ光る */
+.map-frame[data-hover] .trace-flow { animation-duration: 0.35s !important; }
+.map-frame[data-hover="diner"] .trace-flow { filter: drop-shadow(0 0 6px #ffd54f); }
+.map-frame[data-hover="bar"] .trace-flow { filter: drop-shadow(0 0 6px #b388ff); }
+.map-frame[data-hover="other"] .trace-flow { filter: drop-shadow(0 0 6px #4af2a1); }
+
+/* 各店の特設ページ */
+.shop-page {
+  position: relative;
+  min-height: 70vh;
+  padding: 28px;
+  overflow: hidden;
+  border-radius: 12px;
+}
+@media (min-width: 640px) { .shop-page { padding: 40px; } }
+.shop-page-diner { background: linear-gradient(135deg, #2b2111 0%, #171108 100%); border: 1px solid #5c431d; }
+.shop-page-bar { background: linear-gradient(135deg, #140d24 0%, #08050e 100%); border: 1px solid #4a3270; }
+.product-card {
+  display: block;
+  text-align: left;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.product-card:not(:disabled):hover { transform: translateY(-4px); border-color: rgba(255, 255, 255, 0.4); }
+.product-card:disabled { opacity: 0.45; cursor: not-allowed; }
+.shopkeeper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-top: 24px;
+  pointer-events: none;
+}
+@media (min-width: 1024px) {
+  .shopkeeper { position: absolute; right: 24px; bottom: 0; width: 250px; margin: 0; }
+}
+.shopkeeper-balloon {
+  max-width: 240px;
+  margin: 0 12px -6px 0;
+  padding: 12px 18px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #fff;
+  background: #000;
+  border: 1px solid #444;
+  border-radius: 12px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 2;
+}
+.shopkeeper-avatar {
+  display: block;
+  overflow: hidden;
+  width: 200px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.5));
+  animation: peek-up 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28) both;
+}
+@keyframes peek-up { from { transform: translateY(150px); } to { transform: translateY(0); } }
+
+/* 裏路地スロット */
+.alley {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 30px 16px;
+  background: linear-gradient(180deg, #050b08 0%, #020302 100%);
+  border: 1px solid #14291e;
+  border-radius: 12px;
+}
+.slot-machine {
+  width: min(360px, 100%);
+  margin-top: 18px;
+  padding: 28px;
+  text-align: center;
+  background: #141c18;
+  border: 4px solid #2e473b;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(0, 0, 0, 0.8);
+}
+.slot-title { margin-bottom: 18px; font-size: 17px; letter-spacing: 4px; color: #4af2a1; text-shadow: 0 0 10px #4af2a1; }
+.slot-reels { display: flex; justify-content: center; gap: 12px; margin-bottom: 22px; padding: 18px; background: #000; border: 2px solid #222; border-radius: 8px; }
+.reel { width: 64px; height: 64px; line-height: 64px; font-size: 38px; background: #111; border: 1px solid #333; border-radius: 4px; user-select: none; }
+.slot-btn {
+  width: 80%;
+  padding: 12px 0;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #fff;
+  background: #d32f2f;
+  border-radius: 50px;
+  box-shadow: 0 5px 0 #9a0007, 0 8px 15px rgba(0, 0, 0, 0.5);
+  transition: all 0.1s;
+}
+.slot-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #9a0007; }
+.slot-btn:disabled { color: #888; background: #444; box-shadow: none; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) { .crt-noise, .shopkeeper-avatar { animation: none; } }

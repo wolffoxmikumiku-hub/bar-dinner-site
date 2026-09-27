@@ -12,7 +12,17 @@ import { BoardArt } from "./BoardArt";
  *  - ピンにホバー/フォーカスで発光＆店名、クリックで onPick
  *  - Barは20時以降・Dinerは昼だけ点灯、雨の日は鳩、ヤマセミ兄妹は日替わりで出張
  */
-export function MapBoard({ onPick, current, compact }: { onPick: (s: Shop) => void; current?: string; compact?: boolean }) {
+export function MapBoard({
+  onPick,
+  current,
+  compact,
+  onHover,
+}: {
+  onPick: (s: Shop) => void;
+  current?: string;
+  compact?: boolean;
+  onHover?: (s: Shop | null) => void;
+}) {
   const { reception } = useRadio();
   const [hover, setHover] = useState<string | null>(null);
 
@@ -24,7 +34,7 @@ export function MapBoard({ onPick, current, compact }: { onPick: (s: Shop) => vo
   const isRain = reception ? meets(reception, "rain") : false;
 
   return (
-    <div className={`map-frame relative aspect-[1000/640] ${compact ? "map-compact" : "min-w-[720px]"}`}>
+    <div className={`map-frame relative aspect-[1000/640] ${compact ? "map-compact" : "min-w-[720px]"}`} data-hover={hover ? (hover === "collective-diner" ? "diner" : hover === "the-node" ? "bar" : "other") : undefined}>
       <BoardArt />
 
       {AREAS.map((a) => (
@@ -47,10 +57,10 @@ export function MapBoard({ onPick, current, compact }: { onPick: (s: Shop) => vo
           <button
             key={s.id}
             onClick={() => onPick(s)}
-            onPointerEnter={() => setHover(s.id)}
-            onPointerLeave={() => setHover((h) => (h === s.id ? null : h))}
-            onFocus={() => setHover(s.id)}
-            onBlur={() => setHover(null)}
+            onPointerEnter={() => (setHover(s.id), onHover?.(s))}
+            onPointerLeave={() => (setHover((h) => (h === s.id ? null : h)), onHover?.(null))}
+            onFocus={() => (setHover(s.id), onHover?.(s))}
+            onBlur={() => (setHover(null), onHover?.(null))}
             className="pin group absolute -translate-x-1/2 -translate-y-1/2"
             style={{ left: `${s.x / 10}%`, top: `${s.y / 6.4}%`, ["--pin" as string]: color }}
             aria-label={`${s.name}${closed ? "（準備中）" : ""}`}
