@@ -30,7 +30,7 @@ export type Reception = {
 };
 
 const WEATHERS: Weather[] = ["clear", "clear", "static", "rain", "rain", "storm"];
-const TRAVEL_SPOTS: AreaId[] = ["cpu", "capacitor", "resistor", "quartz", "mirror"];
+const TRAVEL_SPOTS: AreaId[] = ["cpu", "capacitor", "resistor", "quartz", "hill"];
 
 type NetworkInformationLike = { effectiveType?: string; downlink?: number };
 

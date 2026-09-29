@@ -110,7 +110,7 @@ export function TunerDial() {
         <div className="mt-1 flex items-center justify-between gap-2 font-mono text-[10px] sm:text-xs">
           <span className="shrink-0 whitespace-nowrap tabular-nums text-[var(--mint)]">VOL {vol}</span>
           <span className="truncate text-right text-amber-100/80">
-            {powered ? `♪ ${place}${sound.muffled ? "（扉の向こうから）" : ""}` : "…（しずか）…"}
+            {powered ? `♪ ${place}${sound.muffled ? "（扉の向こうから）" : ""} ／ 作曲: ジャックリーン` : "…（しずか）…"}
           </span>
         </div>
       </div>

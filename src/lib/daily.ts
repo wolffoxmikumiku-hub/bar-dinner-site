@@ -39,7 +39,7 @@ const JUNK: ShopItem[] = [
   { name: "LED 7セグ表示器 ×4", note: "「8」だけ光らない", price: "6 CR" },
   { name: "ジャンク基板 詰め放題袋", price: "8 CR" },
   { name: "バリコン（可変コンデンサ）", note: "回すと遠い局がかすかに聞こえる", price: "10 CR" },
-  { name: "27A 12V 電池（弾帯用・10連）", note: "街の必需品", price: "5 CR" },
+  { name: "27A 12V 電池（弾帯用・10連）", note: "ヤマセミ兄妹とカラスの旦那がよく買っていく", price: "5 CR" },
   { name: "赤いトグルスイッチ", note: "どこに付けても押したくなる", price: "3 CR" },
   { name: "ポケベル（受信のみ）", price: "9 CR" },
 ];

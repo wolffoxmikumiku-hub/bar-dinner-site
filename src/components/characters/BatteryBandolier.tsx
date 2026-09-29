@@ -1,5 +1,5 @@
 /**
- * 共通シグネチャー「27A 12V」超小型乾電池のガンベルト（弾帯）。
+ * 「27A 12V」超小型乾電池のガンベルト（弾帯）。巻いているのはヤマセミ兄妹とカラスだけ。
  * キャラクターの胸・肩にたすき掛けで重ねて使う。
  */
 export function BatteryBandolier({ className, cells = 5 }: { className?: string; cells?: number }) {

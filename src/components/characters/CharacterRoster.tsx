@@ -24,7 +24,7 @@ export function CharacterRoster() {
       <p className="font-mono text-xs tracking-[0.3em] text-[var(--mint)]">RESIDENTS</p>
       <h2 className="mt-2 text-2xl font-black text-white sm:text-4xl">住人たち</h2>
       <p className="mt-3 max-w-2xl text-sm text-emerald-50/70">
-        みんな胸や肩に「27A 12V」の弾帯を巻いている。この街ではそれが身分証で、お守りで、ちょっとしたお洒落。
+        基板の上で暮らす住人たち。「27A 12V」電池の弾帯を巻いているのは、ヤマセミ兄妹とカラスの旦那だけ。
       </p>
 
       <div className="mt-6 flex flex-wrap gap-2" role="tablist" aria-label="エリアで絞り込み">
@@ -63,7 +63,7 @@ export function CharacterRoster() {
                   ) : (
                     <span className={here ? "" : "grayscale"}>{c.emoji}</span>
                   )}
-                  <BatteryBandolier className="absolute -bottom-1 -left-2 w-14" />
+                  {c.bandolier && <BatteryBandolier className="absolute -bottom-1 -left-2 w-14" />}
                 </div>
                 <div className="min-w-0">
                   <p className="text-[10px] font-mono tracking-widest text-emerald-50/50">

@@ -37,16 +37,16 @@ src/
   components/
     RadioProvider.tsx     音（ON/OFF・音量・今いる店）・受信・グリッチの共有状態
     hero/
-      pcbShader.ts        基板シェーダー（銅箔の流光・ビアの静電気・ハンダ鏡面・ノイズ・雨・雷・グリッチ）
+      pcbShader.ts        基板シェーダー（銅箔の流光・ビアの静電気・ノイズ・雨・雷・グリッチ）
       PcbCanvas.tsx       Three.js フルスクリーン描画、画面外で停止、WebGL不可時はCSSフォールバック
       TunerDial.tsx       画面上部のサウンドコントロール（SOUND ON/OFF + 音量つまみ/目盛りドラッグ/矢印キー）
-      Hero.tsx            ヒーロー + 「銀色の鏡面広場」 + 受信ログ
+      Hero.tsx            ヒーロー + 受信ログ
     porthole/PortholeViewer.tsx  SIGNAL RECEIVER：ヘッダー（CREDIT/ITEMS/TIME）＋タブ（RECEIVER / PROJECT LOGS / BACK ALLEY）。MAIN は左ログ・中央CRT丸窓・右地図、Diner/Bar 特設ページ（注文でクレジット）、裏路地スロット
     map/
       BoardArt.tsx        全体基板マップのSVG（部品＝エリア）
       MapBoard.tsx        地図のピン（ホバー発光＋店名）、条件付き訪問客
       ShopModal.tsx       店舗モーダル（シナブン堂=焼きたてパン＋ジャンク、The Node=雨の日イベント 等）
-    characters/           住人一覧、27A 12V 弾帯SVG
+    characters/           住人一覧、27A 12V 弾帯SVG（巻いているのはヤマセミ兄妹とカラスだけ）
     layout/               ローダー（スペースハム）、トップバー、世界観/シグネチャー/フッター
 public/scenes/            丸窓・世界観セクションの参考イラスト（差し替え前提）
 ```

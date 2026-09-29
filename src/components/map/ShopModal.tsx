@@ -155,7 +155,7 @@ export function ShopModal({ shop, onClose }: { shop: Shop | null; onClose: () =>
                           ) : (
                             c.emoji
                           )}
-                          <BatteryBandolier className="absolute -bottom-1 -left-1 w-9" />
+                          {c.bandolier && <BatteryBandolier className="absolute -bottom-1 -left-1 w-9" />}
                         </span>
                         <span className="min-w-0">
                           <b className="block truncate text-sm text-white">{c.name}</b>

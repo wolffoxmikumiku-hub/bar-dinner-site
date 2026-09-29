@@ -283,16 +283,6 @@ body {
   border: 1px solid rgba(232, 255, 245, 0.08);
 }
 
-/* ── Easter egg ───────────────────────── */
-.solder-mirror {
-  border-radius: 46% 54% 50% 50% / 52% 46% 54% 48%;
-  background:
-    radial-gradient(circle at 35% 28%, #fff 0 6%, transparent 22%),
-    radial-gradient(circle at 60% 70%, rgba(0, 0, 0, 0.25), transparent 50%),
-    conic-gradient(from 200deg, #eef3f6, #8c979f, #f9fbfc, #6d7880, #dfe6ea, #a8b2b9, #eef3f6);
-  box-shadow: 0 0 80px rgba(223, 230, 234, 0.35), inset 0 -12px 40px rgba(0, 0, 0, 0.35), inset 0 10px 30px rgba(255, 255, 255, 0.6);
-  overflow: hidden;
-}
 .worklog {
   font-family: var(--font-mono-x);
   font-size: 11px;

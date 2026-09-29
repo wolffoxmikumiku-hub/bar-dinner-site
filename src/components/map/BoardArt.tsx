@@ -141,17 +141,6 @@ export function BoardArt() {
         <text y="52" textAnchor="middle" className="silk-svg">BT1 POWER</text>
       </g>
 
-      {/* 銀色の鏡面広場（ハンダのフィレット） */}
-      <g transform="translate(490 520)">
-        <path
-          d="M-70 -8 C-72 -40 -20 -52 12 -44 C52 -36 84 -30 86 -2 C88 26 48 40 10 38 C-30 36 -68 22 -70 -8 Z"
-          fill="url(#solder)"
-          stroke="#e8eef2"
-          strokeOpacity="0.7"
-        />
-        <ellipse cx="-18" cy="-20" rx="28" ry="7" fill="#fff" opacity="0.55" />
-        <text y="62" textAnchor="middle" className="silk-svg">SILVER MIRROR</text>
-      </g>
       {/* 流動の丘 */}
       <g transform="translate(640 575)">
         <path d="M-60 6 C-50 -18 -10 -22 20 -14 C46 -8 64 -2 62 10 C60 22 -52 24 -60 6 Z" fill="url(#solder)" opacity="0.85" />

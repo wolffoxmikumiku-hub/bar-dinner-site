@@ -1,37 +1,18 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
 import { useRadio } from "@/components/RadioProvider";
 import { WEATHER_LABEL } from "@/lib/reception";
 import { PcbCanvas, type MirrorSpot } from "./PcbCanvas";
 
-const LANDSCAPE: MirrorSpot = { x: 0.74, y: 0.3, r: 0.12 };
-const PORTRAIT: MirrorSpot = { x: 0.64, y: 0.3, r: 0.085 };
+// 鏡面広場は撤去（r = 0 でシェーダー側も描かない）
+const NO_MIRROR: MirrorSpot = { x: 0, y: 0, r: 0 };
 
 export function Hero() {
   const { reception } = useRadio();
-  const box = useRef<HTMLElement>(null);
-  const [size, setSize] = useState({ w: 1280, h: 800 });
-  const mirror = size.w / size.h < 0.9 ? PORTRAIT : LANDSCAPE;
-
-  useEffect(() => {
-    const el = box.current!;
-    const ro = new ResizeObserver(() => setSize({ w: el.clientWidth, h: el.clientHeight }));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
-
-  // シェーダー座標 → CSS座標（シェーダーは下が0、CSSは上が0）
-  const hot = {
-    left: mirror.x * size.w,
-    top: (1 - mirror.y) * size.h,
-    d: mirror.r * size.h * 2.4,
-  };
-
   return (
-    <section ref={box} className="relative h-[100svh] min-h-[560px] overflow-hidden" aria-label="基板惑星">
-      <PcbCanvas mirror={mirror} className="absolute inset-0" />
+    <section className="relative h-[100svh] min-h-[560px] overflow-hidden" aria-label="基板惑星">
+      <PcbCanvas mirror={NO_MIRROR} className="absolute inset-0" />
 
       {/* シルクスクリーン印字 */}
       <div aria-hidden className="silk pointer-events-none absolute inset-0 hidden select-none sm:block">
@@ -42,16 +23,6 @@ export function Hero() {
         <span style={{ left: "40%", bottom: "6%" }}>ANT ⌁ AMP-OUT</span>
       </div>
 
-      {/* ハンダの鏡面広場 */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
-        style={{ left: hot.left, top: hot.top, width: hot.d, height: hot.d * 0.8 }}
-      >
-        <span className="silk-label absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap">
-          SILVER MIRROR 広場
-        </span>
-      </div>
 
       {/* タイトル */}
       <div className="pointer-events-none absolute inset-x-0 top-[22%] px-4 sm:left-[7%] sm:right-auto sm:top-[30%] sm:px-0">

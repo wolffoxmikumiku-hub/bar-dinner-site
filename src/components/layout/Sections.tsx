@@ -57,8 +57,7 @@ export function Lore() {
             どこかのアンテナだけはまだ生きていて、遠くの「アクセス」を拾っては、この星の天気や、やって来る客を変えていく。
           </p>
           <p>
-            待ち合わせはいつも「銀色の鏡面広場（シルバー・ミラー）」。
-            散歩なら「流動の丘」。どちらも、なぜそんなにツルッとしているのか、誰も知らない。
+            散歩なら「流動の丘」。なぜあんなにツルッとしているのか、誰も知らない。
           </p>
         </motion.div>
       </div>
@@ -77,7 +76,7 @@ export function Signature() {
           <BatteryBandolier className="mt-4 w-40" cells={8} />
           <h3 className="mt-5 text-lg font-bold text-white">「27A 12V」超小型乾電池</h3>
           <p className="mt-2 text-sm text-emerald-50/70">
-            キャラクターが胸や肩にガンベルト（弾帯）状に巻きつけている共通アクセサリ。電源の落ちた星で、いちばん大切なもの。
+            ヤマセミ兄妹とカラスの旦那だけが、胸や肩にガンベルト（弾帯）状に巻きつけている。ジャンクを渡り歩く彼らの商売道具で、お守り。
           </p>
         </motion.div>
         <motion.div {...fade} className="sig-card">

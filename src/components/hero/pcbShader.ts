@@ -116,7 +116,7 @@ vec3 scene(vec2 frag) {
   // ハンダの鏡面広場（ベタアースのフィレット）
   float d = solderSdf(q);
   float r = uMirror.z;
-  if (d < 0.02) {
+  if (r > 0.0 && d < 0.02) {
     vec2 e = vec2(0.002, 0.0);
     float hC = sqrt(clamp(-d / r, 0.0, 1.0));
     float hX = sqrt(clamp(-solderSdf(q + e.xy) / r, 0.0, 1.0));

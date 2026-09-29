@@ -13,7 +13,6 @@ export type AreaId =
   | "resistor"
   | "quartz"
   | "power"
-  | "mirror"
   | "hill"
   | "speaker"
   | "cooling";
@@ -73,15 +72,6 @@ export const AREAS: Area[] = [
     description: "電源は落ちているはずなのに、雷が来ると何かが走り出す。立入注意。",
     x: 190,
     y: 470,
-    source: "brief",
-  },
-  {
-    id: "mirror",
-    name: "銀色の鏡面広場",
-    part: "シルバー・ミラー",
-    description: "住人の待ち合わせ場所。どこまでもツルッとした銀色の地面は、誰が作ったのか誰も知らない。",
-    x: 490,
-    y: 520,
     source: "brief",
   },
   {
@@ -461,10 +451,24 @@ export const SHOPS: Shop[] = [
     x: 935,
     y: 300,
     tagline: "星の出口で踊る",
-    concept: "イヤホンジャックの奥のダンスホール。DJはトカゲのジャックリーン。",
+    concept: "イヤホンジャックの奥のダンスホール。DJはトカゲのジャックリーン。街じゅうの店で流れているBGMは、ぜんぶ彼女が作曲したもの。",
+    goods: ["各店舗BGM CD（全15タイトル）", "JACKリーン作曲集 BOX", "ダンスホール JACK ステッカー"],
     characters: ["lizard"],
     accent: "pink",
-    sections: [],
+    sections: [
+      {
+        title: "BGM CD — 作曲：ジャックリーン",
+        kicker: "SHOP SOUNDTRACKS",
+        items: [
+          { name: "Bar: The Node — Lo-fi Jazz", note: "フクロウのマスターのリクエストで、ゆっくり", price: "12 CR" },
+          { name: "COLLECTIVE DINER — Jukebox", note: "鉄板の音に負けないウォーキングベース", price: "12 CR" },
+          { name: "電波塔 — GAL BEAT", price: "12 CR" },
+          { name: "公籠包 — 湯気の調べ", price: "12 CR" },
+          { name: "Pâtisserie Quartz — 32768Hz", price: "12 CR" },
+          { name: "JACKリーン作曲集 BOX", note: "全店のBGMを1箱に", price: "60 CR" },
+        ],
+      },
+    ],
     source: "excel",
   },
   {
@@ -520,6 +524,8 @@ export type Character = {
   personality?: string;
   behavior?: string;
   appearsWhen?: Condition;
+  /** 「27A 12V」電池の弾帯を巻いている（ヤマセミ兄妹とカラスだけ） */
+  bandolier?: boolean;
   source: "brief" | "excel" | "brief+excel";
 };
 
@@ -603,7 +609,9 @@ export const CHARACTERS: Character[] = [
     area: "capacitor",
     shop: "shinabundo",
     role: "80sジャンク担当",
+    fashion: "胸に「27A 12V」電池の弾帯",
     personality: "光るもの、古いもの、壊れたものを見ると放っておけない。",
+    bandolier: true,
     source: "brief",
   },
   {
@@ -656,10 +664,10 @@ export const CHARACTERS: Character[] = [
   { id: "volt", name: "ボルト", animal: "電気三兄弟・長男", emoji: "⚡", area: "power", shop: "power-alley", role: "言わざる", look: "大きめの黒パーカーの隙間から顔が出ている", personality: "クールでシニカル。闇取引や裏路地スロットの案内役。", appearsWhen: "storm", source: "brief+excel" },
   { id: "pulse", name: "パルス", animal: "電気三兄弟・次男", emoji: "〰️", area: "power", shop: "power-alley", role: "見ざる", look: "紐を固く絞ったフードで顔を隠している", personality: "シャイ。喋り出すと星の秘密をポロッと語ってしまう。", appearsWhen: "storm", source: "brief+excel" },
   { id: "spark", name: "スパーク", animal: "電気三兄弟・三男", emoji: "✨", area: "power", shop: "power-alley", role: "聞かざる", look: "フードは後ろに垂れ下がっている", personality: "超ハイテンション。画面を走り回ってクレジットを撒き散らす。", appearsWhen: "storm", source: "brief+excel" },
-  { id: "yamasemi-brother", name: "ヤマセミ兄", animal: "ヤマセミ", emoji: "🐦", area: "travel", role: "出張：ジャンク・無骨ガジェット", personality: "各地区を渡り歩く出張屋台。", source: "brief" },
-  { id: "yamasemi-sister", name: "ヤマセミ妹", animal: "ヤマセミ", emoji: "🐦", area: "travel", role: "出張：ゆめかわサイバー雑貨", personality: "兄と一緒に出張。シナブン堂とは仲良し。", source: "brief" },
+  { id: "yamasemi-brother", name: "ヤマセミ兄", animal: "ヤマセミ", emoji: "🐦", area: "travel", role: "出張：ジャンク・無骨ガジェット", fashion: "肩から「27A 12V」電池の弾帯", personality: "各地区を渡り歩く出張屋台。", bandolier: true, source: "brief" },
+  { id: "yamasemi-sister", name: "ヤマセミ妹", animal: "ヤマセミ", emoji: "🐦", area: "travel", role: "出張：ゆめかわサイバー雑貨", fashion: "肩から「27A 12V」電池の弾帯", personality: "兄と一緒に出張。シナブン堂とは仲良し。", bandolier: true, source: "brief" },
   { id: "kitten", name: "液体子猫", animal: "子猫", emoji: "🐱", image: "/characters/kitten.png", area: "cpu", shop: "moomoomeaw", role: "謎の生命体", look: "とろっとした液体のようなシルエット", personality: "あくびをすると口の中に小さな牛がいる。", source: "excel" },
-  { id: "lizard", name: "ジャックリーン", animal: "トカゲ", emoji: "🦎", area: "speaker", shop: "jack", role: "DJ", look: "中性的な姉さん", source: "excel" },
+  { id: "lizard", name: "ジャックリーン", animal: "トカゲ", emoji: "🦎", area: "speaker", shop: "jack", role: "DJ・作曲家", look: "中性的な姉さん", personality: "街の各店舗のBGMをすべて作曲した。店ごとのCDも自分の店で売っている。", source: "excel" },
   { id: "penguin", name: "ペンギンの子", animal: "ペンギン", emoji: "🐧", area: "cooling", shop: "radiator-park", role: "アイス売り", source: "excel" },
 ];
 
