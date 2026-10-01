@@ -1,13 +1,11 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRadio } from "@/components/RadioProvider";
 import { AREAS, COPPER, SHOPS, YAMASEMI_STALL, areaById, type Shop } from "@/data/world";
 import { meets } from "@/lib/reception";
 import { BoardArt } from "./BoardArt";
-import { CharacterSprite } from "@/components/shopfx/CharacterSprite";
-import type { Facing } from "@/components/shopfx/characterArt";
 
 /**
  * 基板の街の地図（ピン＝ワープタグ）
@@ -92,12 +90,6 @@ export function MapBoard({
         );
       })}
 
-      {/* 丹頂の前を行き来する女将（低解像度スプライト。押すと入店） */}
-      {(() => {
-        const tancho = shops.find((s) => s.id === "tancho");
-        return tancho ? <CraneWalker x={tancho.x} y={tancho.y} onClick={() => onPick(tancho)} /> : null;
-      })()}
-
       {isRain && (
         <motion.span
           initial={{ opacity: 0, x: -10 }}
@@ -113,35 +105,3 @@ export function MapBoard({
   );
 }
 
-/** 店の前を左右に行き来する（地図座標 1000x640） */
-function CraneWalker({ x, y, onClick }: { x: number; y: number; onClick: () => void }) {
-  const [t, setT] = useState(0);
-  useEffect(() => {
-    let raf = 0;
-    const t0 = performance.now();
-    const tick = (now: number) => {
-      setT(((now - t0) / 1000) % 12);
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
-  // 0–5秒: 左へ歩く / 5–6秒: こちらを向いて止まる / 6–11秒: 右へ戻る / 11–12秒: 止まる
-  const span = 70;
-  let dx = 0;
-  let facing: Facing = "down";
-  let walking = false;
-  if (t < 5) (dx = -span * (t / 5), (facing = "left"), (walking = true));
-  else if (t < 6) dx = -span;
-  else if (t < 11) (dx = -span + span * ((t - 6) / 5), (facing = "right"), (walking = true));
-  return (
-    <button
-      aria-label="ニホンツルの女将（割烹料理 丹頂に入る）"
-      onClick={onClick}
-      className="absolute z-[2] -translate-x-1/2 -translate-y-full"
-      style={{ left: `${(x - 30 + dx) / 10}%`, top: `${(y + 40) / 6.4}%` }}
-    >
-      <CharacterSprite id="crane" facing={facing} walking={walking} scale={1} fps={5} />
-    </button>
-  );
-}
