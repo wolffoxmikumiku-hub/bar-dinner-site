@@ -632,7 +632,7 @@ export const CHARACTERS: Character[] = [
   { id: "rabbit", name: "ウサギ", animal: "ウサギ", emoji: "🐰", area: "resistor", shop: "denpato", role: "黒ギャルJK（バイト）", fashion: "ガングロ、ルーズソックス、C3キャロット", personality: "「まじウケる〜」とダラダラ過ごしている。", source: "excel" },
   { id: "opossum", name: "オポッサム", animal: "オポッサム", emoji: "🐀", area: "resistor", shop: "loop", role: "店主", fashion: "ヴィンテージスポーツ、バケットハット", personality: "電動キックボードで移動。よくバカンスに消える。", source: "excel" },
   { id: "shiba", name: "柴犬大将", animal: "柴犬", emoji: "🐕", area: "resistor", shop: "nikukyu-sushi", role: "大将", fashion: "ネジりハチマキ、職人前掛け", source: "excel" },
-  { id: "crane", name: "ニホンツルの女将", animal: "ニホンツル", emoji: "🦢", area: "resistor", shop: "tancho", role: "女将", fashion: "着物", source: "excel" },
+  { id: "crane", name: "ニホンツルの女将", animal: "ニホンツル", emoji: "🦢", image: "/characters/crane/standing.png", area: "resistor", shop: "tancho", role: "女将", fashion: "着物", source: "excel" },
   {
     id: "husky",
     name: "ハスキー",

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRadio } from "@/components/RadioProvider";
 import { ShopModal } from "@/components/map/ShopModal";
 import { MapBoard } from "@/components/map/MapBoard";
+import { ShopDialogueModal } from "@/components/shopfx/ShopDialogueModal";
 import { SHOPS, shopById, type Shop } from "@/data/world";
 import { meets } from "@/lib/reception";
 
@@ -138,7 +139,7 @@ function useWallet() {
  *  - 店で買い物（シミュレート）をするとクレジットが貯まり、裏路地のスロットで使える
  */
 export function PortholeViewer() {
-  const { reception, glitch, enterShop } = useRadio();
+  const { reception, glitch, enterShop, powered } = useRadio();
   const now = useClock();
   const wallet = useWallet();
   const [page, setPage] = useState<Page>("main");
@@ -177,9 +178,18 @@ export function PortholeViewer() {
   const warp = (s: Shop) => {
     if (s.id === "collective-diner") return (setFloor("1F"), go("shop-1F"));
     if (s.id === "the-node") return (setFloor("B1"), go("shop-B1"));
+    if (s.id === "tancho") return setCrane(true); // 女将の立ち絵＋会話で入店
     if (s.openEffect === "static-burst") glitch(0.9);
     setShop(s);
   };
+  const [crane, setCrane] = useState(false);
+  const [craneToast, setCraneToast] = useState<string | null>(null);
+  // 丹頂に入っている間は丹頂のBGM
+  useEffect(() => {
+    if (!crane) return;
+    enterShop("tancho");
+    return () => enterShop(null);
+  }, [crane, enterShop]);
 
   return (
     <section id="live" className="receiver relative mx-auto max-w-[1500px] px-4 py-16 sm:py-24">
@@ -359,6 +369,31 @@ export function PortholeViewer() {
       </AnimatePresence>
 
       <ShopModal shop={shop} onClose={() => setShop(null)} />
+      <ShopDialogueModal
+        open={crane}
+        onClose={() => setCrane(false)}
+        shopName="割烹料理 丹頂"
+        isOpen
+        characterId="crane"
+        soundOn={powered}
+        lines={["ようこそ、お越しくださいました。", "ここでは雑音を置いて、どうぞ静かに。今日の椀物は、ちょうど出汁がととのったところです。"]}
+        items={[
+          { name: "本日のおまかせ懐石", price: 8800 },
+          { name: "丹頂の出汁パック（6袋）", price: 1800 },
+          { name: "女将の手ぬぐい（波柄）", price: 1500 },
+        ]}
+        onAddToCart={(it) => {
+          const reward = Math.round(it.price / 100);
+          wallet.save(wallet.credit + reward, wallet.items);
+          setCraneToast(`「${it.name}」をシミュレート購入しました。+${reward} CREDIT`);
+          window.setTimeout(() => setCraneToast(null), 2200);
+        }}
+      />
+      {craneToast && (
+        <p className="fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 rounded-md border border-[#4af2a1]/40 bg-black/85 px-4 py-2 font-mono text-xs text-[#4af2a1]">
+          {craneToast}
+        </p>
+      )}
     </section>
   );
 }

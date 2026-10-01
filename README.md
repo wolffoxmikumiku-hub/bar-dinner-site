@@ -55,6 +55,7 @@ public/scenes/            丸窓・世界観セクションの参考イラスト
 
 - **BGM**: 店のモーダル（店に入る）やお土産ショップを開くと、その店のBGMに切り替わる。`src/lib/radioEngine.ts` の `TRACKS` の該当店に `url: "/audio/xxx.mp3"` を足すと、合成音の代わりに音声ファイルをループ再生（`public/audio/` に置く）。
 - **店内で動く住人**: `public/scenes/sprites/`（シーン画像から切り出したスプライト）と `diner-1f-open.webp`（バイソンとウェイトレスを抜いた背景）。配置と動きは `PortholeViewer.tsx` の `FLOORS[*].actors`、動きの中身は `globals.css` の `.act-*` / `.trip-*`。シーン画像を差し替えたら作り直しが必要。
+- **キャラの2種類のドット絵**: `src/components/shopfx/`（akira 提供）。地図を歩く低解像度スプライト（`public/characters/<id>/walk.png`）と、入店時に砂嵐→ピントが合う精細立ち絵（`standing.png`）。キャラ追加は `characterArt.ts` に1件＋画像2枚。現在は割烹料理 丹頂のニホンツルの女将。
 - **窓の外の雨**: `PortholeViewer.tsx` の `FLOORS[*].panes`（シーン画像 1408x768 上の窓ガラスの形）。画像を差し替えたら座標も合わせる。
 - **静的HTML版**: `npm run build:html` で `../html版/index.html`（ダブルクリックで開ける）を書き出す。
 - **シーン画像**: `public/scenes/*.webp`。丸窓は画像中心 (712, 380) 付近の半径 380px を切り抜く前提（`.porthole-scene` の left/top/width で調整）。
