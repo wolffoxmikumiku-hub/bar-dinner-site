@@ -41,6 +41,8 @@ const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign
       { kind: "poly", points: [[995, 10], [1100, 40], [1100, 285], [995, 250]] },
     ],
     paneTint: "rgba(74, 92, 120, 0.62)",
+    // akira 指定のズーム（ジュークボックス〜右の窓、看板〜スツール）
+    view: [160, 30, 1080],
     fx: "grill",
     front: { src: "/scenes/diner-1f-front.webp", box: [697, 322, 711, 446] },
     actors: [
