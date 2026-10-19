@@ -604,6 +604,14 @@ body {
   86% { transform: translate(22%, -7%) scale(0.95); opacity: 0; }
   92%, 100% { transform: translate(0, 0); opacity: 1; }
 }
+/* 新しい店内: 左奥の厨房ドアへ引っ込む */
+.trip-kitchen-l { animation: trip-kitchen-l 28s ease-in-out infinite; }
+@keyframes trip-kitchen-l {
+  0%, 60% { transform: translate(0, 0); opacity: 1; }
+  66% { transform: translate(-45%, -12%) scale(0.95); opacity: 0; }
+  86% { transform: translate(-45%, -12%) scale(0.95); opacity: 0; }
+  92%, 100% { transform: translate(0, 0); opacity: 1; }
+}
 /* ウェイトレス: ローラースケートで画角の外へ配膳に出て、戻ってくる */
 .act-skate { animation: act-skate 0.7s ease-in-out infinite; }
 @keyframes act-skate {

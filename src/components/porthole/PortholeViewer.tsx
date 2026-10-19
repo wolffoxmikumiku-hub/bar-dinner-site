@@ -26,40 +26,35 @@ type Pane = { kind: "poly"; points: [number, number][] } | { kind: "ellipse"; cx
  * 店内で動く住人（シーン画像から切り出したスプライト）。box = [x, y, w, h]（シーン画像 1408x768 の座標）
  * anim は globals.css の .act-* クラス。trip はたまに画角の外へ出ていく動き
  */
-type Actor = { id: string; box: [number, number, number, number]; anim: string; trip?: string; delay?: number };
+type Actor = { id: string; box: [number, number, number, number]; anim: string; trip?: string; delay?: number; /** カウンターの奥（front レイヤーの後ろ）に立つ */ behind?: boolean };
 /** 閉店中に残る明かり（窓の外光など）。住人のいない場所だけを照らす。a = 明るさ 0..1 */
 type Light = { cx: number; cy: number; rx: number; ry: number; a: number };
-const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign: string; panes: Pane[]; paneTint: string; closedLights: Light[]; openSrc?: string; actors: Actor[]; fx?: "grill" }> = {
+const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign: string; panes: Pane[]; paneTint: string; closedLights: Light[]; openSrc?: string; actors: Actor[]; fx?: "grill"; /** 住人より手前に重ねるレイヤー（カウンター等） */ front?: { src: string; box: [number, number, number, number] } }> = {
   "1F": {
     shop: "collective-diner",
+    // 店内の絵は akira 作（キャラなしの内装）。ネオンは「COLLECTIVE DINER」に差し替え済み
     src: "/scenes/diner-1f.webp",
-    alt: "COLLECTIVE DINER の店内。バイソンがバーガーを焼き、プロングホーンがローラースケートで配膳している",
+    alt: "COLLECTIVE DINER の店内。バイソンがカウンターの奥で肉を焼き、プロングホーンがローラースケートで配膳している",
     sign: "1F DINER ／ Open 5 AM",
     panes: [
-      { kind: "poly", points: [[837, 130], [869, 142], [869, 230], [837, 220]] },
-      { kind: "poly", points: [[899, 155], [982, 195], [982, 267], [899, 235]] },
+      { kind: "ellipse", cx: 572, cy: 248, rx: 19, ry: 25 },
+      { kind: "poly", points: [[995, 10], [1100, 40], [1100, 285], [995, 250]] },
     ],
     paneTint: "rgba(74, 92, 120, 0.62)",
-    // 営業中は、バイソンとウェイトレスを抜いた背景の上に住人を重ねる
-    openSrc: "/scenes/diner-1f-open.webp",
     fx: "grill",
+    front: { src: "/scenes/diner-1f-front.webp", box: [697, 322, 711, 446] },
     actors: [
-      { id: "bison", box: [651, 178, 148, 293], anim: "act-cook", trip: "trip-kitchen" },
-      { id: "owl", box: [886, 317, 124, 183], anim: "act-read" },
-      { id: "fox", box: [472, 478, 106, 110], anim: "act-cheer", delay: 0 },
-      { id: "bunny", box: [392, 505, 65, 97], anim: "act-cheer", delay: 0.35 },
-      { id: "squirrel", box: [363, 552, 37, 55], anim: "act-cheer", delay: 0.7 },
-      { id: "raccoon1", box: [525, 583, 65, 68], anim: "act-chat", delay: 0.2 },
-      { id: "raccoon2", box: [455, 629, 56, 68], anim: "act-chat", delay: 0.9 },
-      { id: "waitress", box: [601, 393, 177, 248], anim: "act-skate", trip: "trip-serve" },
+      { id: "bison", box: [797, 190, 126, 249], anim: "act-cook", trip: "trip-kitchen-l", behind: true },
+      { id: "owl", box: [641, 283, 99, 146], anim: "act-read" },
+      { id: "waitress", box: [440, 350, 150, 211], anim: "act-skate", trip: "trip-serve" },
     ],
-    // 夜: 窓からの月明かり、ジュークボックスの残り灯、空いたスツールとボックス席
+    // 夜: 窓からの外光、ジュークボックスとネオンの残り灯、ドアの小窓
     closedLights: [
-      { cx: 910, cy: 165, rx: 105, ry: 125, a: 1 },
-      { cx: 370, cy: 395, rx: 62, ry: 95, a: 0.55 },
-      { cx: 545, cy: 130, rx: 95, ry: 70, a: 0.3 },
-      { cx: 835, cy: 560, rx: 55, ry: 60, a: 0.45 },
-      { cx: 990, cy: 630, rx: 120, ry: 70, a: 0.6 },
+      { cx: 1060, cy: 170, rx: 95, ry: 140, a: 1 },
+      { cx: 300, cy: 300, rx: 60, ry: 110, a: 0.6 },
+      { cx: 650, cy: 95, rx: 170, ry: 60, a: 0.35 },
+      { cx: 572, cy: 248, rx: 40, ry: 45, a: 0.6 },
+      { cx: 880, cy: 600, rx: 140, ry: 70, a: 0.35 },
     ],
   },
   B1: {
@@ -259,7 +254,7 @@ export function PortholeViewer() {
                                   className="block w-full"
                                   draggable={false}
                                 />
-                                {open && <Actors floor={floor} actors={current.actors} fx={current.fx} />}
+                                {open && <Actors floor={floor} actors={current.actors} fx={current.fx} front={current.front} />}
                                 {!open && <LightsOff id={floor} lights={current.closedLights} />}
                                 {rain && <WindowRain id={floor} panes={current.panes} tint={current.paneTint} storm={storm} />}
                               </span>
@@ -613,42 +608,57 @@ function DataLog({ floor, open, rain }: { floor: FloorId; open: boolean; rain: b
 const pct = (v: number, of: number) => `${(v / of) * 100}%`;
 
 /** 営業中の店内: 住人がそれぞれ動く（お客さんはワイワイ、店員は仕事中） */
-function Actors({ floor, actors, fx }: { floor: FloorId; actors: Actor[]; fx?: "grill" }) {
+function Actors({
+  floor,
+  actors,
+  fx,
+  front,
+}: {
+  floor: FloorId;
+  actors: Actor[];
+  fx?: "grill";
+  front?: { src: string; box: [number, number, number, number] };
+}) {
+  const sprite = (a: Actor) => {
+    const [x, y, w, h] = a.box;
+    return (
+      <span
+        key={a.id}
+        className={`actor ${a.trip ?? ""}`}
+        style={{ left: pct(x, 1408), top: pct(y, 768), width: pct(w, 1408), height: pct(h, 768) }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`/scenes/sprites/${floor === "1F" ? "diner-1f" : "bar-b1"}-${a.id}.webp`}
+          alt=""
+          className={`block h-full w-full ${a.anim}`}
+          style={{ animationDelay: a.delay ? `${a.delay}s` : undefined }}
+          draggable={false}
+        />
+      </span>
+    );
+  };
   return (
     <span className="absolute inset-0" aria-hidden>
       {fx === "grill" && (
-        <span className="absolute" style={{ left: pct(540, 1408), top: pct(300, 768), width: pct(100, 1408), height: pct(60, 768) }}>
+        <span className="absolute" style={{ left: pct(720, 1408), top: pct(150, 768), width: pct(80, 1408), height: pct(45, 768) }}>
           {Array.from({ length: 5 }, (_, i) => (
             <span key={i} className="grill-smoke" style={{ left: `${10 + i * 18}%`, animationDelay: `${i * 0.55}s` }} />
           ))}
         </span>
       )}
-      {floor === "1F" && (
-        <span className="absolute" style={{ left: pct(380, 1408), top: pct(470, 768), width: pct(200, 1408), height: pct(90, 768) }}>
-          {Array.from({ length: 8 }, (_, i) => (
-            <span key={i} className="confetti" style={{ left: `${6 + i * 12}%`, animationDelay: `${i * 0.4}s`, background: ["#ff5a7a", "#ffd24a", "#5ad1ff", "#8dff7a"][i % 4] }} />
-          ))}
-        </span>
+      {actors.filter((a) => a.behind).map(sprite)}
+      {front && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={front.src}
+          alt=""
+          className="absolute [image-rendering:pixelated]"
+          style={{ left: pct(front.box[0], 1408), top: pct(front.box[1], 768), width: pct(front.box[2], 1408), height: pct(front.box[3], 768) }}
+          draggable={false}
+        />
       )}
-      {actors.map((a) => {
-        const [x, y, w, h] = a.box;
-        return (
-          <span
-            key={a.id}
-            className={`actor ${a.trip ?? ""}`}
-            style={{ left: pct(x, 1408), top: pct(y, 768), width: pct(w, 1408), height: pct(h, 768) }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`/scenes/sprites/${floor === "1F" ? "diner-1f" : "bar-b1"}-${a.id}.webp`}
-              alt=""
-              className={`block h-full w-full ${a.anim}`}
-              style={{ animationDelay: a.delay ? `${a.delay}s` : undefined }}
-              draggable={false}
-            />
-          </span>
-        );
-      })}
+      {actors.filter((a) => !a.behind).map(sprite)}
     </span>
   );
 }
