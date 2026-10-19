@@ -838,7 +838,7 @@ body {
 }
 .crt-view {
   position: relative;
-  aspect-ratio: 1;
+  aspect-ratio: 1408 / 768;
   overflow: hidden;
   border-radius: 8px;
   background: radial-gradient(circle at 50% 50%, #0d100e, #000 75%);
@@ -864,10 +864,18 @@ body {
   pointer-events: none;
   background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.25) 100%);
 }
-@media (min-width: 640px) { .crt-view { aspect-ratio: 16 / 10; } }
 .crt-cam { position: absolute; inset: 0; display: grid; place-items: center; }
-.crt-cam .porthole { width: auto; height: 80%; }
-@media (min-width: 640px) { .crt-cam .porthole { height: 90%; } }
+/* 横長モニター: シーン画像（1408x768）をそのまま全面に映す */
+.monitor-glass { position: absolute; inset: 0; overflow: hidden; isolation: isolate; background: #000; }
+.monitor-glass .porthole-scene { width: 100%; left: 0; top: 0; }
+.monitor-glare {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.08), transparent 45%),
+    radial-gradient(ellipse at 50% 50%, transparent 60%, rgba(0, 0, 0, 0.45) 100%);
+}
 .crt-cam .closed-sign { font-size: 20px; padding: 8px 14px; }
 .crt-noise {
   position: absolute;

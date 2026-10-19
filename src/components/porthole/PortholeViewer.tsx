@@ -29,7 +29,7 @@ type Pane = { kind: "poly"; points: [number, number][] } | { kind: "ellipse"; cx
 type Actor = { id: string; box: [number, number, number, number]; anim: string; trip?: string; delay?: number; /** カウンターの奥（front レイヤーの後ろ）に立つ */ behind?: boolean };
 /** 閉店中に残る明かり（窓の外光など）。住人のいない場所だけを照らす。a = 明るさ 0..1 */
 type Light = { cx: number; cy: number; rx: number; ry: number; a: number };
-const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign: string; panes: Pane[]; paneTint: string; closedLights: Light[]; openSrc?: string; actors: Actor[]; fx?: "grill"; /** 住人より手前に重ねるレイヤー（カウンター等） */ front?: { src: string; box: [number, number, number, number] } }> = {
+const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign: string; panes: Pane[]; paneTint: string; closedLights: Light[]; openSrc?: string; actors: Actor[]; fx?: "grill"; /** モニターに映す範囲 [x, y, w]（シーン座標。高さは横長比率から決まる）。省略時は全体 */ view?: [number, number, number]; /** 住人より手前に重ねるレイヤー（カウンター等） */ front?: { src: string; box: [number, number, number, number] } }> = {
   "1F": {
     shop: "collective-diner",
     // 店内の絵は akira 作（キャラなしの内装・ネオン「COLLECTIVE DINER」）
@@ -60,6 +60,8 @@ const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign
   B1: {
     shop: "the-node",
     src: "/scenes/bar-b1.webp",
+    // 元絵に丸窓の枠が描き込まれているので、枠の内側だけを映す
+    view: [352, 235, 720],
     alt: "Bar: The Node の店内。フクロウのマスターがグラスを磨いている",
     sign: "B1 BAR ／ Open 8 PM",
     panes: [{ kind: "ellipse", cx: 945, cy: 210, rx: 53, ry: 68 }],
@@ -70,7 +72,7 @@ const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign
       { id: "mole", box: [962, 440, 92, 122], anim: "act-chat", delay: 0.1 },
       { id: "mouse", box: [934, 397, 56, 63], anim: "act-cheer", delay: 0.5 },
       { id: "raccoon", box: [665, 485, 142, 223], anim: "act-sip" },
-      { id: "firefly", box: [1073, 410, 29, 52], anim: "act-fly" },
+      { id: "firefly", box: [975, 330, 29, 52], anim: "act-fly" },
     ],
     // 昼: 丸い小窓からの外光と、酒棚のボトルだけ
     closedLights: [
@@ -227,14 +229,13 @@ export function PortholeViewer() {
                 <DataLog floor={floor} open={open} rain={rain} />
               </div>
 
-              {/* 中央: CRTモニター（丸窓カメラ） */}
+              {/* 中央: CRTモニター（横長の定点カメラ） */}
               <div className="order-1 lg:order-2">
                 <div className="crt-frame">
                   <div className="crt-view">
                     <span key={noise} className="crt-noise" aria-hidden />
                     <div className="crt-cam">
-                      <div className="porthole">
-                        <div className="porthole-glass">
+                      <div className="monitor-glass">
                           <AnimatePresence initial={false} mode="popLayout">
                             <motion.button
                               key={floor}
@@ -246,7 +247,7 @@ export function PortholeViewer() {
                               exit={{ y: floor === "B1" ? "-100%" : "100%" }}
                               transition={{ type: "spring", stiffness: 120, damping: 20 }}
                             >
-                              <span className="porthole-scene">
+                              <span className="porthole-scene" style={viewStyle(current.view)}>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={open ? (current.openSrc ?? current.src) : current.src}
@@ -275,12 +276,7 @@ export function PortholeViewer() {
                               )}
                             </motion.button>
                           </AnimatePresence>
-                          <span className="porthole-glare" aria-hidden />
-                        </div>
-                        {Array.from({ length: 8 }, (_, i) => {
-                          const a = ((i * 45 + 22.5) * Math.PI) / 180;
-                          return <span key={i} className="bolt-head" style={{ left: `${50 + 46.5 * Math.sin(a)}%`, top: `${50 - 46.5 * Math.cos(a)}%` }} aria-hidden />;
-                        })}
+                        <span className="monitor-glare" aria-hidden />
                       </div>
                     </div>
 
@@ -603,6 +599,14 @@ function DataLog({ floor, open, rain }: { floor: FloorId; open: boolean; rain: b
       </ul>
     </div>
   );
+}
+
+/** モニターに映す範囲 → シーン画像の拡大率と位置 */
+function viewStyle(view?: [number, number, number]) {
+  if (!view) return undefined;
+  const [x, y, w] = view;
+  const h = (w * 768) / 1408;
+  return { width: `${(1408 / w) * 100}%`, left: `${(-x / w) * 100}%`, top: `${(-y / h) * 100}%` };
 }
 
 const pct = (v: number, of: number) => `${(v / of) * 100}%`;
