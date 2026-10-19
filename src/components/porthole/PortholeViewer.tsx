@@ -32,7 +32,7 @@ type Light = { cx: number; cy: number; rx: number; ry: number; a: number };
 const FLOORS: Record<FloorId, { shop: Shop["id"]; src: string; alt: string; sign: string; panes: Pane[]; paneTint: string; closedLights: Light[]; openSrc?: string; actors: Actor[]; fx?: "grill"; /** 住人より手前に重ねるレイヤー（カウンター等） */ front?: { src: string; box: [number, number, number, number] } }> = {
   "1F": {
     shop: "collective-diner",
-    // 店内の絵は akira 作（キャラなしの内装）。ネオンは「COLLECTIVE DINER」に差し替え済み
+    // 店内の絵は akira 作（キャラなしの内装・ネオン「COLLECTIVE DINER」）
     src: "/scenes/diner-1f.webp",
     alt: "COLLECTIVE DINER の店内。バイソンがカウンターの奥で肉を焼き、プロングホーンがローラースケートで配膳している",
     sign: "1F DINER ／ Open 5 AM",
